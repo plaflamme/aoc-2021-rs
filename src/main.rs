@@ -2,6 +2,7 @@ use aocf::{Aoc, Level};
 use std::error::Error;
 
 mod day1 {
+    use itertools::izip;
     use std::str::FromStr;
 
     fn parse(input: &str) -> Vec<u32> {
@@ -28,17 +29,13 @@ mod day1 {
     pub fn level2(input: &str) -> impl ToString {
         let depths = parse(input);
 
-        let third = depths.clone().into_iter().skip(2);
-        let second = depths.clone().into_iter().skip(1);
+        let grouped = izip![
+            depths.clone(),
+            depths.clone().into_iter().skip(1),
+            depths.clone().into_iter().skip(2)
+        ];
 
-        let grouped = depths
-            .into_iter()
-            .zip(second)
-            .zip(third)
-            .map(|((first, second), third)| first + second + third)
-            .collect();
-
-        increases(grouped)
+        increases(grouped.map(|(a, b, c)| a + b + c).collect())
     }
 
     #[cfg(test)]
