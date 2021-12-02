@@ -18,6 +18,7 @@ trait Day {
 }
 
 mod day1;
+mod day2;
 
 #[derive(clap::ArgEnum, Clone)]
 enum Mode {
@@ -55,6 +56,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("AOC - 2021 - day {} - {} level", opts.day, level);
     let result = match opts.day {
         1 => run_day::<day1::Solution>(aoc, opts.mode, level),
+        2 => run_day::<day2::Solution>(aoc, opts.mode, level),
         _ => Ok("not implemented".to_string()),
     }?;
 
