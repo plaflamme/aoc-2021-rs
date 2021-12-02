@@ -1,76 +1,85 @@
 use aocf::{Aoc, Level};
+use clap::Parser;
 use std::error::Error;
 
-mod day1 {
-    use itertools::izip;
-    use std::str::FromStr;
+trait Day {
+    const SAMPLE: &'static str;
+    const LEVEL1: &'static str;
+    const LEVEL2: &'static str;
 
-    fn parse(input: &str) -> Vec<u32> {
-        input
-            .lines()
-            .map(|l| u32::from_str(l.trim()).unwrap())
-            .collect()
-    }
+    type Input;
+    type Output: ToString;
 
-    fn increases(depths: Vec<u32>) -> usize {
-        depths
-            .clone()
-            .into_iter()
-            .skip(1)
-            .zip(depths.into_iter())
-            .filter(|(next, previous)| next > previous)
-            .count()
-    }
+    fn parse(input: &str) -> Result<Self::Input, Box<dyn Error>>;
 
-    pub fn level1(input: &str) -> impl ToString {
-        increases(parse(input))
-    }
+    fn level1(input: Self::Input) -> Result<Self::Output, Box<dyn Error>>;
 
-    pub fn level2(input: &str) -> impl ToString {
-        let depths = parse(input);
+    fn level2(input: Self::Input) -> Result<Self::Output, Box<dyn Error>>;
+}
 
-        let grouped = izip![
-            depths.clone(),
-            depths.clone().into_iter().skip(1),
-            depths.clone().into_iter().skip(2)
-        ];
+mod day1;
 
-        increases(grouped.map(|(a, b, c)| a + b + c).collect())
-    }
+#[derive(clap::ArgEnum, Clone)]
+enum Mode {
+    Sample,
+    Print,
+    Submit,
+}
 
-    #[cfg(test)]
-    mod test {
-        use super::*;
-
-        const SAMPLE: &str = "199
-        200
-        208
-        210
-        200
-        207
-        240
-        269
-        260
-        263";
-
-        #[test]
-        fn test_level1() {
-            assert_eq!("7", level1(SAMPLE).to_string());
-        }
-
-        #[test]
-        fn test_level2() {
-            assert_eq!("5", level2(SAMPLE).to_string());
-        }
-    }
+#[derive(clap::Parser)]
+struct Opts {
+    #[clap(short)]
+    day: u8,
+    #[clap(short)]
+    level: Option<u8>,
+    #[clap(arg_enum, default_value = "print")]
+    mode: Mode,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut aoc = Aoc::new().year(Some(2021)).day(Some(1)).init().unwrap();
-    let input = aoc.get_input(false)?;
-    match aoc.level {
-        Level::First => aoc.submit(&day1::level1(&input.clone()).to_string())?,
-        Level::Second => aoc.submit(&day1::level2(&input.clone()).to_string())?,
+    let opts: Opts = Opts::parse();
+
+    let aoc = Aoc::new()
+        .parse_cli(false)
+        .year(Some(2021))
+        .day(Some(opts.day as u32))
+        .init()?;
+
+    let level = match opts.level {
+        None => aoc.level,
+        Some(1) => Level::First,
+        Some(2) => Level::Second,
+        Some(level) => panic!("invalid level {}, must be 1 or 2", level),
     };
-    Ok(())
+
+    println!("AOC - 2021 - day {} - {} level", opts.day, level);
+    let result = match opts.day {
+        1 => run_day::<day1::Solution>(aoc, opts.mode, level),
+        _ => Ok("not implemented".to_string()),
+    }?;
+
+    Ok(println!("{}", result))
+}
+
+fn run_day<T>(mut aoc: Aoc, mode: Mode, level: Level) -> Result<String, Box<dyn Error>>
+where
+    T: Day,
+{
+    let input = match mode {
+        Mode::Sample => <T as Day>::SAMPLE.to_string(),
+        _ => aoc.get_input(false)?,
+    };
+    let input = <T as Day>::parse(&input)?;
+    let (solution, expected) = match level {
+        Level::First => (<T as Day>::level1(input)?, <T as Day>::LEVEL1),
+        Level::Second => (<T as Day>::level2(input)?, <T as Day>::LEVEL2),
+    };
+
+    let result = match mode {
+        Mode::Print => solution.to_string(),
+        Mode::Sample => format!("Solution: {} expected: {}", solution.to_string(), expected),
+        Mode::Submit => aoc.submit(&solution.to_string())?,
+    };
+
+    Ok(result)
 }
