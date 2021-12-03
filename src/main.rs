@@ -21,7 +21,7 @@ trait Day {
 mod day1;
 mod day2;
 
-#[derive(clap::ArgEnum, Clone)]
+#[derive(clap::ArgEnum, Clone, Copy)]
 enum Mode {
     Sample,
     Print,
@@ -73,15 +73,31 @@ where
         Mode::Sample => <T as Day>::SAMPLE.to_string(),
         _ => aoc.get_input(false)?,
     };
+    let expected = match (mode, level) {
+        (Mode::Sample, Level::First) => Some(<T as Day>::LEVEL1.to_string()),
+        (Mode::Sample, Level::Second) => Some(<T as Day>::LEVEL2.to_string()),
+        (_, level) => aoc.solution.get(&level).cloned(),
+    };
     let solver = <T as Day>::parse(&input)?;
-    let (solution, expected) = match level {
-        Level::First => (solver.level1()?, <T as Day>::LEVEL1),
-        Level::Second => (solver.level2()?, <T as Day>::LEVEL2),
+    let solution = match level {
+        Level::First => solver.level1()?,
+        Level::Second => solver.level2()?,
     };
 
     let result = match mode {
-        Mode::Print => solution.to_string(),
-        Mode::Sample => format!("Solution: {} expected: {}", solution.to_string(), expected),
+        Mode::Print | Mode::Sample => {
+            let is_correct = match expected.clone() {
+                Some(expected) if solution.to_string() == expected => " (correct)",
+                _ => "",
+            };
+            let expected = expected.unwrap_or("???".to_string());
+            format!(
+                "Solution: {} expected: {}{}",
+                solution.to_string(),
+                expected,
+                is_correct,
+            )
+        }
         Mode::Submit => aoc.submit(&solution.to_string())?,
     };
 
