@@ -1,8 +1,8 @@
 use std::{error::Error, str::FromStr};
 
-pub struct Solution;
+pub struct Solution(Vec<Command>);
 
-pub enum Command {
+enum Command {
     Down(u32),
     Up(u32),
     Forward(u32),
@@ -81,26 +81,27 @@ forward 2
     const LEVEL1: &'static str = "150";
     const LEVEL2: &'static str = "900";
 
-    type Input = Vec<Command>;
     type Output = i32;
 
-    fn parse(input: &str) -> Result<Self::Input, Box<dyn std::error::Error>> {
-        Ok(input
-            .lines()
-            .filter(|l| l.len() > 0)
-            .map(|l| Command::from_str(l).unwrap())
-            .collect())
+    fn parse(input: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        Ok(Self(
+            input
+                .lines()
+                .filter(|l| l.len() > 0)
+                .map(|l| Command::from_str(l).unwrap())
+                .collect(),
+        ))
     }
 
-    fn level1(input: Self::Input) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn level1(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
         let mut pos = Position::new();
-        pos.apply_all(input);
+        pos.apply_all(self.0);
         Ok(pos.0 * pos.1)
     }
 
-    fn level2(input: Self::Input) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn level2(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
         let mut pos = AimedPosition::new();
-        pos.apply_all(input);
+        pos.apply_all(self.0);
         Ok(pos.0 * pos.1)
     }
 }

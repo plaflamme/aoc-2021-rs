@@ -1,7 +1,7 @@
 use itertools::izip;
 use std::str::FromStr;
 
-pub struct Solution;
+pub struct Solution(Vec<u32>);
 
 fn increases(depths: Vec<u32>) -> usize {
     depths
@@ -29,54 +29,28 @@ impl super::Day for Solution {
 
     const LEVEL2: &'static str = "5";
 
-    type Input = Vec<u32>;
-
     type Output = usize;
 
-    fn parse(input: &str) -> Result<Self::Input, Box<dyn std::error::Error>> {
-        Ok(input
-            .lines()
-            .map(|l| u32::from_str(l.trim()).unwrap())
-            .collect())
+    fn parse(input: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        Ok(Self(
+            input
+                .lines()
+                .map(|l| u32::from_str(l.trim()).unwrap())
+                .collect(),
+        ))
     }
 
-    fn level1(input: Self::Input) -> Result<Self::Output, Box<dyn std::error::Error>> {
-        Ok(increases(input))
+    fn level1(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
+        Ok(increases(self.0))
     }
 
-    fn level2(input: Self::Input) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn level2(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
         let grouped = izip![
-            input.clone(),
-            input.clone().into_iter().skip(1),
-            input.clone().into_iter().skip(2)
+            self.0.clone(),
+            self.0.clone().into_iter().skip(1),
+            self.0.clone().into_iter().skip(2)
         ];
 
         Ok(increases(grouped.map(|(a, b, c)| a + b + c).collect()))
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    const SAMPLE: &str = "199
-        200
-        208
-        210
-        200
-        207
-        240
-        269
-        260
-        263";
-
-    #[test]
-    fn test_level1() {
-        assert_eq!("7", level1(SAMPLE).to_string());
-    }
-
-    #[test]
-    fn test_level2() {
-        assert_eq!("5", level2(SAMPLE).to_string());
     }
 }

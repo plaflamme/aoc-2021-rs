@@ -7,14 +7,15 @@ trait Day {
     const LEVEL1: &'static str;
     const LEVEL2: &'static str;
 
-    type Input;
     type Output: ToString;
 
-    fn parse(input: &str) -> Result<Self::Input, Box<dyn Error>>;
+    fn parse(input: &str) -> Result<Self, Box<dyn Error>>
+    where
+        Self: Sized;
 
-    fn level1(input: Self::Input) -> Result<Self::Output, Box<dyn Error>>;
+    fn level1(self) -> Result<Self::Output, Box<dyn Error>>;
 
-    fn level2(input: Self::Input) -> Result<Self::Output, Box<dyn Error>>;
+    fn level2(self) -> Result<Self::Output, Box<dyn Error>>;
 }
 
 mod day1;
@@ -71,10 +72,10 @@ where
         Mode::Sample => <T as Day>::SAMPLE.to_string(),
         _ => aoc.get_input(false)?,
     };
-    let input = <T as Day>::parse(&input)?;
+    let solver = <T as Day>::parse(&input)?;
     let (solution, expected) = match level {
-        Level::First => (<T as Day>::level1(input)?, <T as Day>::LEVEL1),
-        Level::Second => (<T as Day>::level2(input)?, <T as Day>::LEVEL2),
+        Level::First => (solver.level1()?, <T as Day>::LEVEL1),
+        Level::Second => (solver.level2()?, <T as Day>::LEVEL2),
     };
 
     let result = match mode {
