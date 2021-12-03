@@ -20,6 +20,7 @@ trait Day {
 
 mod day1;
 mod day2;
+mod day3;
 
 #[derive(clap::ArgEnum, Clone, Copy)]
 enum Mode {
@@ -58,7 +59,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let result = match opts.day {
         1 => run_day::<day1::Solution>(aoc, opts.mode, level),
         2 => run_day::<day2::Solution>(aoc, opts.mode, level),
-        3..=24 => Ok("not implemented".to_string()),
+        3 => run_day::<day3::Solution>(aoc, opts.mode, level),
+        4..=24 => Ok("not implemented".to_string()),
         _ => panic!("invalid day {}, must be [1,24]", opts.day),
     }?;
 
