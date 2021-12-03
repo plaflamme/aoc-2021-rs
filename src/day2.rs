@@ -26,6 +26,26 @@ impl FromStr for Command {
     }
 }
 
+struct Position(i32, i32);
+
+impl Position {
+    fn new() -> Self {
+        Position(0, 0)
+    }
+
+    fn apply(&mut self, cmd: Command) {
+        match cmd {
+            Command::Forward(v) => self.0 += v as i32,
+            Command::Down(v) => self.1 += v as i32,
+            Command::Up(v) => self.1 -= v as i32,
+        };
+    }
+
+    fn apply_all(&mut self, cmds: impl IntoIterator<Item = Command>) {
+        cmds.into_iter().for_each(|cmd| self.apply(cmd));
+    }
+}
+
 impl super::Day for Solution {
     const SAMPLE: &'static str = "forward 5
 down 5
@@ -39,7 +59,7 @@ forward 2
     const LEVEL2: &'static str = "???";
 
     type Input = Vec<Command>;
-    type Output = String;
+    type Output = i32;
 
     fn parse(input: &str) -> Result<Self::Input, Box<dyn std::error::Error>> {
         Ok(input
@@ -50,7 +70,9 @@ forward 2
     }
 
     fn level1(input: Self::Input) -> Result<Self::Output, Box<dyn std::error::Error>> {
-        todo!()
+        let mut pos = Position::new();
+        pos.apply_all(input);
+        Ok(pos.0 * pos.1)
     }
 
     fn level2(input: Self::Input) -> Result<Self::Output, Box<dyn std::error::Error>> {
