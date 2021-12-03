@@ -26,6 +26,8 @@ impl Solution {
         let mask = 1 << (self.1 - 1 - bit);
         match criteria {
             Criteria::Oxygen => {
+                // Keep the numbers that have the MOST COMMON bit or the ones that have `1` when they have the same frequency
+                // AKA: keep only the numbers that have 0 in the bit position if it's more frequent.
                 if zeros > ones {
                     self.0.retain(|n| n & mask == 0);
                 } else {
@@ -33,6 +35,8 @@ impl Solution {
                 }
             }
             Criteria::Co2 => {
+                // Keep the numbers that have the LEAST COMMON bit or the ones that have `0` when they have the same frequency
+                // AKA: keep only the numbers that have 0 in the bit position if its frequency is less or equal to that of the 1s.
                 if zeros <= ones {
                     self.0.retain(|n| n & mask == 0);
                 } else {
@@ -86,17 +90,6 @@ impl super::Day for Solution {
             zeros[bit] = zero_freq;
             ones[bit] = one_freq;
         }
-        for n in self.0 {
-            for bit in 0..self.1 {
-                let mask = 1 << (self.1 - 1 - bit);
-                if n & mask == 0 {
-                    zeros[bit] += 1
-                } else {
-                    ones[bit] += 1
-                }
-            }
-        }
-
         let mut gamma = 0;
         let mut epsilon = 0;
         for bit in 0..self.1 {
