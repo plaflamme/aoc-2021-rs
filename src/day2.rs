@@ -46,6 +46,29 @@ impl Position {
     }
 }
 
+struct AimedPosition(i32, i32, i32);
+
+impl AimedPosition {
+    fn new() -> Self {
+        AimedPosition(0, 0, 0)
+    }
+
+    fn apply(&mut self, cmd: Command) {
+        match cmd {
+            Command::Forward(v) => {
+                self.0 += v as i32;
+                self.1 += self.2 * v as i32;
+            }
+            Command::Down(v) => self.2 += v as i32,
+            Command::Up(v) => self.2 -= v as i32,
+        };
+    }
+
+    fn apply_all(&mut self, cmds: impl IntoIterator<Item = Command>) {
+        cmds.into_iter().for_each(|cmd| self.apply(cmd));
+    }
+}
+
 impl super::Day for Solution {
     const SAMPLE: &'static str = "forward 5
 down 5
@@ -56,7 +79,7 @@ forward 2
 
 ";
     const LEVEL1: &'static str = "150";
-    const LEVEL2: &'static str = "???";
+    const LEVEL2: &'static str = "900";
 
     type Input = Vec<Command>;
     type Output = i32;
@@ -76,6 +99,8 @@ forward 2
     }
 
     fn level2(input: Self::Input) -> Result<Self::Output, Box<dyn std::error::Error>> {
-        todo!()
+        let mut pos = AimedPosition::new();
+        pos.apply_all(input);
+        Ok(pos.0 * pos.1)
     }
 }
