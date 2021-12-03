@@ -83,25 +83,25 @@ forward 2
 
     type Output = i32;
 
-    fn parse(input: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        Ok(Self(
+    fn parse(input: &str) -> Self {
+        Self(
             input
                 .lines()
                 .filter(|l| l.len() > 0)
                 .map(|l| Command::from_str(l).unwrap())
                 .collect(),
-        ))
+        )
     }
 
-    fn level1(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn level1(self) -> Self::Output {
         let mut pos = Position::new();
         pos.apply_all(self.0);
-        Ok(pos.0 * pos.1)
+        pos.0 * pos.1
     }
 
-    fn level2(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn level2(self) -> Self::Output {
         let mut pos = AimedPosition::new();
         pos.apply_all(self.0);
-        Ok(pos.0 * pos.1)
+        pos.0 * pos.1
     }
 }

@@ -31,26 +31,26 @@ impl super::Day for Solution {
 
     type Output = usize;
 
-    fn parse(input: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        Ok(Self(
+    fn parse(input: &str) -> Self {
+        Self(
             input
                 .lines()
                 .map(|l| u32::from_str(l.trim()).unwrap())
                 .collect(),
-        ))
+        )
     }
 
-    fn level1(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
-        Ok(increases(self.0))
+    fn level1(self) -> Self::Output {
+        increases(self.0)
     }
 
-    fn level2(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn level2(self) -> Self::Output {
         let grouped = izip![
             self.0.clone(),
             self.0.clone().into_iter().skip(1),
             self.0.clone().into_iter().skip(2)
         ];
 
-        Ok(increases(grouped.map(|(a, b, c)| a + b + c).collect()))
+        increases(grouped.map(|(a, b, c)| a + b + c).collect())
     }
 }

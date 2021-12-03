@@ -65,7 +65,7 @@ impl super::Day for Solution {
 
     type Output = u32;
 
-    fn parse(input: &str) -> Result<Self, Box<dyn std::error::Error>>
+    fn parse(input: &str) -> Self
     where
         Self: Sized,
     {
@@ -75,10 +75,10 @@ impl super::Day for Solution {
             .map(|line| u32::from_str_radix(line, 2).unwrap())
             .collect();
         let width = input.lines().filter(|l| l.len() > 0).next().unwrap().len();
-        Ok(Solution(bits, width))
+        Solution(bits, width)
     }
 
-    fn level1(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn level1(self) -> Self::Output {
         let mut zeros = vec![0 as u32; self.1];
         let mut ones = vec![0 as u32; self.1];
         for bit in 0..self.1 {
@@ -108,10 +108,10 @@ impl super::Day for Solution {
             }
         }
 
-        Ok(epsilon * gamma)
+        epsilon * gamma
     }
 
-    fn level2(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
+    fn level2(self) -> Self::Output {
         let mut oxygen = self.clone();
         for bit in 0..self.1 {
             oxygen.filter_by_bit_criteria(bit, Criteria::Oxygen);
@@ -130,6 +130,6 @@ impl super::Day for Solution {
         assert!(oxygen.0.len() == 1);
         assert!(co2.0.len() == 1);
 
-        Ok(oxygen.0.get(0).unwrap() * co2.0.get(0).unwrap())
+        oxygen.0.get(0).unwrap() * co2.0.get(0).unwrap()
     }
 }

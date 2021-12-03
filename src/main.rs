@@ -9,13 +9,13 @@ trait Day {
 
     type Output: ToString;
 
-    fn parse(input: &str) -> Result<Self, Box<dyn Error>>
+    fn parse(input: &str) -> Self
     where
         Self: Sized;
 
-    fn level1(self) -> Result<Self::Output, Box<dyn Error>>;
+    fn level1(self) -> Self::Output;
 
-    fn level2(self) -> Result<Self::Output, Box<dyn Error>>;
+    fn level2(self) -> Self::Output;
 }
 
 mod day1;
@@ -80,10 +80,10 @@ where
         (Mode::Sample, Level::Second) => Some(<T as Day>::LEVEL2.to_string()),
         (_, level) => aoc.solution.get(&level).cloned(),
     };
-    let solver = <T as Day>::parse(&input)?;
+    let solver = <T as Day>::parse(&input);
     let solution = match level {
-        Level::First => solver.level1()?,
-        Level::Second => solver.level2()?,
+        Level::First => solver.level1(),
+        Level::Second => solver.level2(),
     };
 
     let result = match mode {
