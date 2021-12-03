@@ -1,4 +1,10 @@
+#[derive(Clone)]
 pub struct Solution(Vec<u32>, usize);
+
+enum Criteria {
+    Oxygen,
+    Co2,
+}
 
 impl Solution {
     fn bit_freq(&self, bit: usize) -> (u32, u32) {
@@ -13,6 +19,27 @@ impl Solution {
             }
         }
         (zeros, ones)
+    }
+
+    fn filter_by_bit_criteria(&mut self, bit: usize, criteria: Criteria) {
+        let (zeros, ones) = self.bit_freq(bit);
+        let mask = 1 << (self.1 - 1 - bit);
+        match criteria {
+            Criteria::Oxygen => {
+                if zeros > ones {
+                    self.0.retain(|n| n & mask == 0);
+                } else {
+                    self.0.retain(|n| n & mask > 0);
+                }
+            }
+            Criteria::Co2 => {
+                if zeros <= ones {
+                    self.0.retain(|n| n & mask == 0);
+                } else {
+                    self.0.retain(|n| n & mask > 0);
+                }
+            }
+        }
     }
 }
 
@@ -85,6 +112,24 @@ impl super::Day for Solution {
     }
 
     fn level2(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
-        todo!()
+        let mut oxygen = self.clone();
+        for bit in 0..self.1 {
+            oxygen.filter_by_bit_criteria(bit, Criteria::Oxygen);
+            if oxygen.0.len() == 1 {
+                break;
+            }
+        }
+        let mut co2 = self.clone();
+        for bit in 0..self.1 {
+            co2.filter_by_bit_criteria(bit, Criteria::Co2);
+            if co2.0.len() == 1 {
+                break;
+            }
+        }
+
+        assert!(oxygen.0.len() == 1);
+        assert!(co2.0.len() == 1);
+
+        Ok(oxygen.0.get(0).unwrap() * co2.0.get(0).unwrap())
     }
 }
