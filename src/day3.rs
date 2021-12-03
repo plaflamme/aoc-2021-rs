@@ -1,5 +1,21 @@
 pub struct Solution(Vec<u32>, usize);
 
+impl Solution {
+    fn bit_freq(&self, bit: usize) -> (u32, u32) {
+        let mut zeros = 0;
+        let mut ones = 0;
+        let mask = 1 << (self.1 - 1 - bit);
+        for n in self.0.clone() {
+            if n & mask == 0 {
+                zeros += 1
+            } else {
+                ones += 1
+            }
+        }
+        (zeros, ones)
+    }
+}
+
 impl super::Day for Solution {
     const SAMPLE: &'static str = "
 00100
@@ -18,7 +34,7 @@ impl super::Day for Solution {
 
     const LEVEL1: &'static str = "198";
 
-    const LEVEL2: &'static str = "???";
+    const LEVEL2: &'static str = "230";
 
     type Output = u32;
 
@@ -38,6 +54,11 @@ impl super::Day for Solution {
     fn level1(self) -> Result<Self::Output, Box<dyn std::error::Error>> {
         let mut zeros = vec![0 as u32; self.1];
         let mut ones = vec![0 as u32; self.1];
+        for bit in 0..self.1 {
+            let (zero_freq, one_freq) = self.bit_freq(bit);
+            zeros[bit] = zero_freq;
+            ones[bit] = one_freq;
+        }
         for n in self.0 {
             for bit in 0..self.1 {
                 let mask = 1 << (self.1 - 1 - bit);
