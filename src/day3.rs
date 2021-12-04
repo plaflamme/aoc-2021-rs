@@ -47,7 +47,7 @@ impl Solution {
     }
 }
 
-impl super::Day for Solution {
+impl super::Solver for Solution {
     const SAMPLE: &'static str = "
 00100
 11110

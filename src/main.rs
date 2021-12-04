@@ -2,7 +2,7 @@ use aocf::{Aoc, Level};
 use clap::Parser;
 use std::error::Error;
 
-trait Day {
+trait Solver {
     const SAMPLE: &'static str;
     const LEVEL1: &'static str;
     const LEVEL2: &'static str;
@@ -69,18 +69,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_day<T>(mut aoc: Aoc, mode: Mode, level: Level) -> Result<String, Box<dyn Error>>
 where
-    T: Day,
+    T: Solver,
 {
     let input = match mode {
-        Mode::Sample => <T as Day>::SAMPLE.to_string(),
+        Mode::Sample => <T as Solver>::SAMPLE.to_string(),
         _ => aoc.get_input(false)?,
     };
     let expected = match (mode, level) {
-        (Mode::Sample, Level::First) => Some(<T as Day>::LEVEL1.to_string()),
-        (Mode::Sample, Level::Second) => Some(<T as Day>::LEVEL2.to_string()),
+        (Mode::Sample, Level::First) => Some(<T as Solver>::LEVEL1.to_string()),
+        (Mode::Sample, Level::Second) => Some(<T as Solver>::LEVEL2.to_string()),
         (_, level) => aoc.solution.get(&level).cloned(),
     };
-    let solver = <T as Day>::parse(&input);
+    let solver = <T as Solver>::parse(&input);
     let solution = match level {
         Level::First => solver.level1(),
         Level::Second => solver.level2(),

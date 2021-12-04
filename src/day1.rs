@@ -11,7 +11,7 @@ fn increases(depths: impl Iterator<Item = u32>) -> usize {
         .count()
 }
 
-impl super::Day for Solution {
+impl super::Solver for Solution {
     const SAMPLE: &'static str = "199
 200
 208
