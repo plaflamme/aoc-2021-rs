@@ -2,25 +2,10 @@ use aocf::{Aoc, Level};
 use clap::Parser;
 use std::error::Error;
 
-trait Solver {
-    const SAMPLE: &'static str;
-    const LEVEL1: &'static str;
-    const LEVEL2: &'static str;
-
-    type Output: ToString;
-
-    fn parse(input: &str) -> Self
-    where
-        Self: Sized;
-
-    fn level1(self) -> Self::Output;
-
-    fn level2(self) -> Self::Output;
-}
-
-mod day1;
-mod day2;
-mod day3;
+use aoc2021::day1;
+use aoc2021::day2;
+use aoc2021::day3;
+use aoc2021::Solver;
 
 #[derive(clap::ArgEnum, Clone, Copy)]
 enum Mode {
