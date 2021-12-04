@@ -3,10 +3,7 @@ use clap::Parser;
 use std::error::Error;
 use std::num::ParseIntError;
 
-use aoc2021::day1;
-use aoc2021::day2;
-use aoc2021::day3;
-use aoc2021::Solver;
+use aoc2021::*;
 
 #[derive(clap::ArgEnum, Clone, Copy)]
 enum Mode {
@@ -110,7 +107,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 1 => run_day::<day1::Solution>(&mut aoc, opts.mode, part),
                 2 => run_day::<day2::Solution>(&mut aoc, opts.mode, part),
                 3 => run_day::<day3::Solution>(&mut aoc, opts.mode, part),
-                4..=24 => Ok("not implemented".to_string()),
+                4 => run_day::<day4::Solution>(&mut aoc, opts.mode, part),
+                5..=24 => Ok("not implemented".to_string()),
                 _ => panic!("invalid day {}, must be [1,24]", day),
             }?;
             println!("{}", result);
