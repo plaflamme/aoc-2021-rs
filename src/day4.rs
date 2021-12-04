@@ -55,22 +55,52 @@ impl Board {
     }
 }
 
-struct SolvedBoard(u32, u32);
+struct SolvedBoard(u32, u8);
+
+struct SolutionsIter<N> {
+    next_num: N,
+    next_solved: std::vec::IntoIter<SolvedBoard>, // TODO: how do we abstract over this?
+    remaining_boards: Vec<Board>,
+}
+
+impl<N> Iterator for SolutionsIter<N>
+where
+    N: Iterator<Item = (usize, u32)>,
+{
+    type Item = SolvedBoard;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.next_solved.next() {
+            None => loop {
+                if let Some((count, n)) = self.next_num.next() {
+                    let solved = self
+                        .remaining_boards
+                        .drain_filter(|b| b.call(n))
+                        .map(|b| SolvedBoard(b.unmarked().sum::<u32>() * n, (count + 1) as u8))
+                        .collect_vec();
+
+                    if solved.len() > 0 {
+                        self.next_solved = solved.into_iter();
+                        break self.next_solved.next();
+                    }
+                } else {
+                    break None;
+                }
+            },
+            s => s,
+        }
+    }
+}
 
 pub struct Solution(Vec<u32>, Vec<Board>);
 
 impl Solution {
-    fn solved_boards(&self) -> impl Iterator<Item = SolvedBoard> + '_ {
-        self.1.iter().cloned().flat_map(|mut board| {
-            let mut count = 0;
-            for n in self.0.iter() {
-                count += 1;
-                if board.call(*n) {
-                    return Some(SolvedBoard(board.unmarked().sum::<u32>() * n, count));
-                }
-            }
-            None
-        })
+    fn solved_boards(self) -> impl Iterator<Item = SolvedBoard> {
+        SolutionsIter {
+            next_num: self.0.into_iter().enumerate(),
+            next_solved: Vec::new().into_iter(),
+            remaining_boards: self.1,
+        }
     }
 }
 
@@ -137,10 +167,9 @@ impl super::Solver for Solution {
     }
 
     fn part1(self) -> Self::Output {
-        // not the most efficient, we could iterate on numbers first so that we can do .next().0
         self.solved_boards()
-            .min_by(|SolvedBoard(_, count), SolvedBoard(_, count2)| count.cmp(count2))
-            .unwrap()
+            .next()
+            .expect("didn't find any solution :(")
             .0
     }
 

@@ -1,3 +1,4 @@
+#![feature(drain_filter)]
 pub trait Solver {
     const SAMPLE: &'static str;
     const LEVEL1: &'static str;
