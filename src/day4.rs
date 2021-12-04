@@ -1,6 +1,70 @@
+use itertools::Itertools;
+
 #[derive(Clone, Debug)]
 struct Board {
-    cells: Vec<Vec<u32>>,
+    cells: Vec<u32>,
+    cols: usize,
+    calls: Vec<bool>,
+}
+
+impl Board {
+    fn new(cells: Vec<Vec<u32>>) -> Self {
+        let flat_cells: Vec<u32> = cells.clone().into_iter().flatten().collect();
+        let calls = vec![false; flat_cells.len()];
+        Board {
+            cells: flat_cells,
+            cols: cells.get(0).unwrap().len(),
+            calls,
+        }
+    }
+
+    fn call(&mut self, value: u32) -> bool {
+        if let Some((idx, _)) = self.cells.iter().find_position(|n| **n == value) {
+            *self.calls.get_mut(idx).unwrap() = true;
+
+            if self
+                .rows()
+                .into_iter()
+                .any(|r| r.into_iter().all(|v| v == true))
+            {
+                return true;
+            }
+            if self.cols().any(|c| c.into_iter().all(|v| v == true)) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn rows(&self) -> Vec<Vec<bool>> {
+        self.calls
+            .clone()
+            .into_iter()
+            .chunks(self.cols)
+            .into_iter()
+            .map(|c| c.collect())
+            .collect()
+    }
+
+    fn col(&self, col: usize) -> Vec<bool> {
+        self.calls
+            .clone()
+            .into_iter()
+            .skip(col)
+            .step_by(self.cols)
+            .collect()
+    }
+
+    fn cols(&self) -> impl Iterator<Item = Vec<bool>> + '_ {
+        (0..self.cols).into_iter().map(|c| self.col(c))
+    }
+
+    fn unmarked(&self) -> impl Iterator<Item = u32> + '_ {
+        self.calls
+            .iter()
+            .zip(self.cells.iter())
+            .filter_map(|(call, value)| if !*call { Some(*value) } else { None })
+    }
 }
 
 pub struct Solution(Vec<u32>, Vec<Board>);
@@ -32,7 +96,7 @@ impl super::Solver for Solution {
 
     const LEVEL2: &'static str = "";
 
-    type Output = String;
+    type Output = u32;
 
     fn parse(input: &str) -> Self
     where
@@ -47,7 +111,7 @@ impl super::Solver for Solution {
             (Vec::new(), Vec::new()),
             |(mut boards, mut cells), line| match line {
                 "" => {
-                    boards.push(Board { cells });
+                    boards.push(Board::new(cells));
                     (boards, Vec::new())
                 }
                 nums => {
@@ -62,13 +126,21 @@ impl super::Solver for Solution {
             },
         );
 
-        boards.push(Board { cells: last_board });
+        boards.push(Board::new(last_board));
 
         Solution(nums, boards)
     }
 
     fn part1(self) -> Self::Output {
-        todo!()
+        let mut boards = self.1.clone();
+        for n in self.0 {
+            for board in boards.iter_mut() {
+                if board.call(n) {
+                    return board.unmarked().sum::<u32>() * n;
+                }
+            }
+        }
+        panic!("could not find winner")
     }
 
     fn part2(self) -> Self::Output {
