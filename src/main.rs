@@ -1,6 +1,7 @@
 use aocf::{Aoc, Level};
 use clap::Parser;
 use std::error::Error;
+use std::num::ParseIntError;
 
 use aoc2021::day1;
 use aoc2021::day2;
@@ -14,7 +15,7 @@ enum Mode {
     Submit,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 enum Part {
     One,
     Two,
@@ -32,12 +33,54 @@ impl std::str::FromStr for Part {
     }
 }
 
+enum Days {
+    Set(Vec<u8>),
+    Range(u8, u8),
+}
+
+impl std::str::FromStr for Days {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some((from, to)) = s.split_once("..") {
+            let from = u8::from_str(from).unwrap_or(1);
+            let to = u8::from_str(to).unwrap_or(24);
+            Ok(Days::Range(from, to))
+        } else if s.to_ascii_lowercase() == "all" {
+            Ok(Days::Range(1, 24))
+        } else {
+            Ok(Days::Set(
+                s.split(',')
+                    .map(|c| u8::from_str(c))
+                    .collect::<Result<Vec<u8>, ParseIntError>>()?,
+            ))
+        }
+    }
+}
+
+impl IntoIterator for Days {
+    type Item = u8;
+
+    type IntoIter = std::vec::IntoIter<u8>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            Days::Set(days) => days.into_iter(),
+            Days::Range(from, to) => (from..=to).collect::<Vec<u8>>().into_iter(),
+        }
+    }
+}
+
 #[derive(clap::Parser)]
 struct Opts {
-    #[clap(short)]
-    day: u8,
-    #[clap(short)]
+    /// Day(s) to run, e.g.: -d 1 or -d 1,3 or -d 3..6 or -d ..4
+    #[clap(short, name = "days", default_value = "all")]
+    days: Days,
+
+    /// Puzzle part to run, e.g.: -p 2
+    #[clap(short, name = "parts")]
     part: Option<Part>,
+
     #[clap(arg_enum, default_value = "print")]
     mode: Mode,
 }
@@ -45,34 +88,45 @@ struct Opts {
 fn main() -> Result<(), Box<dyn Error>> {
     let opts: Opts = Opts::parse();
 
-    let aoc = Aoc::new()
-        .parse_cli(false)
-        .year(Some(2021))
-        .day(Some(opts.day as u32))
-        .init()?;
+    println!("AoC - 2021");
 
-    let level = match opts.part {
-        None => aoc.level,
-        Some(Part::One) => Level::First,
-        Some(Part::Two) => Level::Second,
-    };
+    for day in opts.days {
+        println!("Day {}", day);
 
-    println!("AOC - 2021 - day {} - {} part", opts.day, level);
-    let result = match opts.day {
-        1 => run_day::<day1::Solution>(aoc, opts.mode, level),
-        2 => run_day::<day2::Solution>(aoc, opts.mode, level),
-        3 => run_day::<day3::Solution>(aoc, opts.mode, level),
-        4..=24 => Ok("not implemented".to_string()),
-        _ => panic!("invalid day {}, must be [1,24]", opts.day),
-    }?;
+        let mut aoc = Aoc::new()
+            .parse_cli(false)
+            .year(Some(2021))
+            .day(Some(day as u32))
+            .init()?;
 
-    Ok(println!("{}", result))
+        let parts: Vec<Part> = match opts.part {
+            None => vec![Part::One, Part::Two],
+            Some(part) => vec![part],
+        };
+
+        for part in parts {
+            print!("  - part {:?} ... ", part);
+            let result = match day {
+                1 => run_day::<day1::Solution>(&mut aoc, opts.mode, part),
+                2 => run_day::<day2::Solution>(&mut aoc, opts.mode, part),
+                3 => run_day::<day3::Solution>(&mut aoc, opts.mode, part),
+                4..=24 => Ok("not implemented".to_string()),
+                _ => panic!("invalid day {}, must be [1,24]", day),
+            }?;
+            println!("{}", result);
+        }
+    }
+    Ok(())
 }
 
-fn run_day<T>(mut aoc: Aoc, mode: Mode, level: Level) -> Result<String, Box<dyn Error>>
+fn run_day<T>(aoc: &mut Aoc, mode: Mode, part: Part) -> Result<String, Box<dyn Error>>
 where
     T: Solver,
 {
+    let level = match part {
+        Part::One => Level::First,
+        Part::Two => Level::Second,
+    };
     let input = match mode {
         Mode::Sample => <T as Solver>::SAMPLE.to_string(),
         _ => aoc.get_input(false)?,
@@ -90,17 +144,12 @@ where
 
     let result = match mode {
         Mode::Print | Mode::Sample => {
-            let is_correct = match expected.clone() {
-                Some(expected) if solution.to_string() == expected => " (correct)",
-                _ => "",
+            let qualifier = match expected.clone() {
+                Some(expected) if solution.to_string() == expected => "(correct)".to_string(),
+                Some(expected) => format!("(incorrect, expected {})", expected),
+                None => "(???)".to_string(),
             };
-            let expected = expected.unwrap_or("???".to_string());
-            format!(
-                "Solution: {} expected: {}{}",
-                solution.to_string(),
-                expected,
-                is_correct,
-            )
+            format!("{} {}", solution.to_string(), qualifier)
         }
         Mode::Submit => aoc.submit(&solution.to_string())?,
     };
