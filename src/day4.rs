@@ -55,7 +55,24 @@ impl Board {
     }
 }
 
+struct SolvedBoard(u32, u32);
+
 pub struct Solution(Vec<u32>, Vec<Board>);
+
+impl Solution {
+    fn solved_boards(&self) -> impl Iterator<Item = SolvedBoard> + '_ {
+        self.1.iter().cloned().flat_map(|mut board| {
+            let mut count = 0;
+            for n in self.0.iter() {
+                count += 1;
+                if board.call(*n) {
+                    return Some(SolvedBoard(board.unmarked().sum::<u32>() * n, count));
+                }
+            }
+            None
+        })
+    }
+}
 
 impl super::Solver for Solution {
     const SAMPLE: &'static str =
@@ -120,44 +137,17 @@ impl super::Solver for Solution {
     }
 
     fn part1(self) -> Self::Output {
-        let mut boards = self.1.clone();
-        for n in self.0 {
-            for board in boards.iter_mut() {
-                if board.call(n) {
-                    return board.unmarked().sum::<u32>() * n;
-                }
-            }
-        }
-        panic!("could not find winner")
+        // not the most efficient, we could iterate on numbers first so that we can do .next().0
+        self.solved_boards()
+            .min_by(|SolvedBoard(_, count), SolvedBoard(_, count2)| count.cmp(count2))
+            .unwrap()
+            .0
     }
 
     fn part2(self) -> Self::Output {
-        let mut boards = self.1.clone();
-
-        let last_winner = boards
-            .iter_mut()
-            .map(|board| {
-                let mut count = 0;
-                let mut solution = None;
-                for n in self.0.iter() {
-                    count += 1;
-                    if board.call(*n) {
-                        solution = Some(board.unmarked().sum::<u32>() * n);
-                        break;
-                    }
-                }
-                (solution, count)
-            })
-            .filter_map(|(solution, count)| match solution {
-                Some(s) => Some((s, count)),
-                None => None,
-            })
-            .max_by(|(_, count), (_, count2)| count.cmp(count2));
-
-        if let Some((solution, _)) = last_winner {
-            return solution;
-        }
-
-        panic!("could not find winner")
+        self.solved_boards()
+            .max_by(|SolvedBoard(_, count), SolvedBoard(_, count2)| count.cmp(count2))
+            .unwrap()
+            .0
     }
 }
