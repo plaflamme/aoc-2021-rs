@@ -94,7 +94,7 @@ impl super::Solver for Solution {
 
     const LEVEL1: &'static str = "4512";
 
-    const LEVEL2: &'static str = "";
+    const LEVEL2: &'static str = "1924";
 
     type Output = u32;
 
@@ -144,6 +144,32 @@ impl super::Solver for Solution {
     }
 
     fn part2(self) -> Self::Output {
-        todo!()
+        let mut boards = self.1.clone();
+
+        let last_winner = boards
+            .iter_mut()
+            .map(|board| {
+                let mut count = 0;
+                let mut solution = None;
+                for n in self.0.iter() {
+                    count += 1;
+                    if board.call(*n) {
+                        solution = Some(board.unmarked().sum::<u32>() * n);
+                        break;
+                    }
+                }
+                (solution, count)
+            })
+            .filter_map(|(solution, count)| match solution {
+                Some(s) => Some((s, count)),
+                None => None,
+            })
+            .max_by(|(_, count), (_, count2)| count.cmp(count2));
+
+        if let Some((solution, _)) = last_winner {
+            return solution;
+        }
+
+        panic!("could not find winner")
     }
 }
