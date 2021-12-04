@@ -150,7 +150,7 @@ where
 
     let result = match mode {
         Mode::Print | Mode::Sample => {
-            let qualifier = match expected.clone() {
+            let qualifier = match expected {
                 Some(expected) if solution.to_string() == expected => "(correct)".to_string(),
                 Some(expected) => format!("(incorrect, expected {})", expected),
                 None => "(???)".to_string(),

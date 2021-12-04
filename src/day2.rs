@@ -87,7 +87,7 @@ forward 2
         Self(
             input
                 .lines()
-                .filter(|l| l.len() > 0)
+                .filter(|l| !l.is_empty())
                 .map(|l| Command::from_str(l).unwrap())
                 .collect(),
         )

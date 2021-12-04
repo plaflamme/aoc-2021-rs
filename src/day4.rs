@@ -79,7 +79,7 @@ where
                         .map(|b| SolvedBoard(b.unmarked().sum::<u32>() * n, (count + 1) as u8))
                         .collect_vec();
 
-                    if solved.len() > 0 {
+                    if !solved.is_empty() {
                         self.next_solved = solved.into_iter();
                         break self.next_solved.next();
                     }
@@ -152,7 +152,7 @@ impl super::Solver for Solution {
                 nums => {
                     let row = nums
                         .split(' ')
-                        .filter(|n| n.len() > 0)
+                        .filter(|n| !n.is_empty())
                         .map(|n| n.parse::<u32>().unwrap())
                         .collect();
                     cells.push(row);

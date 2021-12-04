@@ -75,16 +75,16 @@ impl super::Solver for Solution {
     {
         let bits = input
             .lines()
-            .filter(|l| l.len() > 0)
+            .filter(|l| !l.is_empty())
             .map(|line| u32::from_str_radix(line, 2).unwrap())
             .collect();
-        let width = input.lines().filter(|l| l.len() > 0).next().unwrap().len();
+        let width = input.lines().find(|l| !l.is_empty()).unwrap().len();
         Solution(bits, width)
     }
 
     fn part1(self) -> Self::Output {
-        let mut zeros = vec![0 as u32; self.1];
-        let mut ones = vec![0 as u32; self.1];
+        let mut zeros = vec![0_u32; self.1];
+        let mut ones = vec![0_u32; self.1];
         for bit in 0..self.1 {
             let (zero_freq, one_freq) = self.bit_freq(bit);
             zeros[bit] = zero_freq;
