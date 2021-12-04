@@ -118,6 +118,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+macro_rules! timed {
+    ($e: expr) => {{
+        use std::time::Instant;
+        let start = Instant::now();
+        let solution = { $e };
+        (solution, start.elapsed())
+    }};
+}
 
 fn run_day<T>(aoc: &mut Aoc, mode: Mode, part: Part) -> Result<String, Box<dyn Error>>
 where
@@ -137,9 +145,9 @@ where
         (_, level) => aoc.solution.get(&level).cloned(),
     };
     let solver = <T as Solver>::parse(&input);
-    let solution = match level {
-        Level::First => solver.part1(),
-        Level::Second => solver.part2(),
+    let (solution, duration) = match level {
+        Level::First => timed!(solver.part1()),
+        Level::Second => timed!(solver.part2()),
     };
 
     let result = match mode {
@@ -149,7 +157,7 @@ where
                 Some(expected) => format!("(incorrect, expected {})", expected),
                 None => "(???)".to_string(),
             };
-            format!("{} {}", solution.to_string(), qualifier)
+            format!("{:?} {} {}", duration, solution.to_string(), qualifier)
         }
         Mode::Submit => aoc.submit(&solution.to_string())?,
     };
