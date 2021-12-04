@@ -82,7 +82,7 @@ impl super::Solver for Solution {
         Solution(bits, width)
     }
 
-    fn level1(self) -> Self::Output {
+    fn part1(self) -> Self::Output {
         let mut zeros = vec![0 as u32; self.1];
         let mut ones = vec![0 as u32; self.1];
         for bit in 0..self.1 {
@@ -104,7 +104,7 @@ impl super::Solver for Solution {
         epsilon * gamma
     }
 
-    fn level2(self) -> Self::Output {
+    fn part2(self) -> Self::Output {
         let mut oxygen = self.clone();
         for bit in 0..self.1 {
             oxygen.filter_by_bit_criteria(bit, Criteria::Oxygen);

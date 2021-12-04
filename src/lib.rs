@@ -9,9 +9,9 @@ pub trait Solver {
     where
         Self: Sized;
 
-    fn level1(self) -> Self::Output;
+    fn part1(self) -> Self::Output;
 
-    fn level2(self) -> Self::Output;
+    fn part2(self) -> Self::Output;
 }
 
 pub mod day1;

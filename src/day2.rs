@@ -93,13 +93,13 @@ forward 2
         )
     }
 
-    fn level1(self) -> Self::Output {
+    fn part1(self) -> Self::Output {
         let mut pos = Position::new();
         pos.apply_all(self.0);
         pos.0 * pos.1
     }
 
-    fn level2(self) -> Self::Output {
+    fn part2(self) -> Self::Output {
         let mut pos = AimedPosition::new();
         pos.apply_all(self.0);
         pos.0 * pos.1

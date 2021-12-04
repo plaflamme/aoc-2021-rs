@@ -38,11 +38,11 @@ impl super::Solver for Solution {
         )
     }
 
-    fn level1(self) -> Self::Output {
+    fn part1(self) -> Self::Output {
         increases(self.0.into_iter())
     }
 
-    fn level2(self) -> Self::Output {
+    fn part2(self) -> Self::Output {
         increases(
             self.0
                 .into_iter()

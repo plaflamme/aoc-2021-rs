@@ -14,12 +14,30 @@ enum Mode {
     Submit,
 }
 
+#[derive(Clone, Copy)]
+enum Part {
+    One,
+    Two,
+}
+
+impl std::str::FromStr for Part {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "1" | "one" => Ok(Part::One),
+            "2" | "two" => Ok(Part::Two),
+            _ => Err(anyhow::anyhow!("invalid puzzle part {}", s)),
+        }
+    }
+}
+
 #[derive(clap::Parser)]
 struct Opts {
     #[clap(short)]
     day: u8,
     #[clap(short)]
-    level: Option<u8>,
+    part: Option<Part>,
     #[clap(arg_enum, default_value = "print")]
     mode: Mode,
 }
@@ -33,14 +51,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .day(Some(opts.day as u32))
         .init()?;
 
-    let level = match opts.level {
+    let level = match opts.part {
         None => aoc.level,
-        Some(1) => Level::First,
-        Some(2) => Level::Second,
-        Some(level) => panic!("invalid level {}, must be 1 or 2", level),
+        Some(Part::One) => Level::First,
+        Some(Part::Two) => Level::Second,
     };
 
-    println!("AOC - 2021 - day {} - {} level", opts.day, level);
+    println!("AOC - 2021 - day {} - {} part", opts.day, level);
     let result = match opts.day {
         1 => run_day::<day1::Solution>(aoc, opts.mode, level),
         2 => run_day::<day2::Solution>(aoc, opts.mode, level),
@@ -67,8 +84,8 @@ where
     };
     let solver = <T as Solver>::parse(&input);
     let solution = match level {
-        Level::First => solver.level1(),
-        Level::Second => solver.level2(),
+        Level::First => solver.part1(),
+        Level::Second => solver.part2(),
     };
 
     let result = match mode {
