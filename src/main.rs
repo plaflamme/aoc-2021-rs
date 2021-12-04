@@ -2,6 +2,7 @@ use aocf::{Aoc, Level};
 use clap::Parser;
 use std::error::Error;
 use std::num::ParseIntError;
+use termion::{color, style};
 
 use aoc2021::*;
 
@@ -151,8 +152,17 @@ where
     let result = match mode {
         Mode::Print | Mode::Sample => {
             let qualifier = match expected {
-                Some(expected) if solution.to_string() == expected => "(correct)".to_string(),
-                Some(expected) => format!("(incorrect, expected {})", expected),
+                Some(expected) if solution.to_string() == expected => {
+                    format!("({}correct{})", color::Fg(color::Green), style::Reset)
+                }
+                Some(expected) => {
+                    format!(
+                        "({}incorrect{}, expected {})",
+                        color::Fg(color::Red),
+                        style::Reset,
+                        expected
+                    )
+                }
                 None => "(???)".to_string(),
             };
             format!("{:?} {} {}", duration, solution.to_string(), qualifier)
