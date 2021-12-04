@@ -22,48 +22,36 @@ impl Board {
         if let Some((idx, _)) = self.cells.iter().find_position(|n| **n == value) {
             *self.calls.get_mut(idx).unwrap() = true;
 
-            if self
-                .rows()
-                .into_iter()
-                .any(|r| r.into_iter().all(|v| v == true))
-            {
-                return true;
-            }
-            if self.cols().any(|c| c.into_iter().all(|v| v == true)) {
-                return true;
-            }
+            return self.wins();
         }
         false
     }
 
-    fn rows(&self) -> Vec<Vec<bool>> {
-        self.calls
-            .clone()
-            .into_iter()
-            .chunks(self.cols)
-            .into_iter()
-            .map(|c| c.collect())
-            .collect()
+    fn wins(&self) -> bool {
+        if self.rows().into_iter().any(|mut r| r.all(|v| *v)) {
+            return true;
+        }
+        if self.cols().any(|mut c| c.all(|v| *v)) {
+            return true;
+        }
+        false
     }
 
-    fn col(&self, col: usize) -> Vec<bool> {
-        self.calls
-            .clone()
+    fn rows(&self) -> itertools::IntoChunks<impl Iterator<Item = &bool>> {
+        self.calls.iter().chunks(self.cols)
+    }
+
+    fn cols(&self) -> impl Iterator<Item = impl Iterator<Item = &bool>> {
+        (0..self.cols)
             .into_iter()
-            .skip(col)
-            .step_by(self.cols)
-            .collect()
+            .map(|c| self.calls.iter().skip(c).step_by(self.cols))
     }
 
-    fn cols(&self) -> impl Iterator<Item = Vec<bool>> + '_ {
-        (0..self.cols).into_iter().map(|c| self.col(c))
-    }
-
-    fn unmarked(&self) -> impl Iterator<Item = u32> + '_ {
+    fn unmarked(&self) -> impl Iterator<Item = &u32> {
         self.calls
             .iter()
             .zip(self.cells.iter())
-            .filter_map(|(call, value)| if !*call { Some(*value) } else { None })
+            .filter_map(|(call, value)| if !*call { Some(value) } else { None })
     }
 }
 
