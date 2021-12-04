@@ -1,15 +1,13 @@
-use itertools::izip;
+use itertools::Itertools;
 use std::str::FromStr;
 
 pub struct Solution(Vec<u32>);
 
-fn increases(depths: Vec<u32>) -> usize {
+fn increases(depths: impl Iterator<Item = u32>) -> usize {
     depths
-        .clone()
         .into_iter()
-        .skip(1)
-        .zip(depths.into_iter())
-        .filter(|(next, previous)| next > previous)
+        .tuple_windows()
+        .filter(|(previous, next)| next > previous)
         .count()
 }
 
@@ -41,16 +39,15 @@ impl super::Day for Solution {
     }
 
     fn level1(self) -> Self::Output {
-        increases(self.0)
+        increases(self.0.into_iter())
     }
 
     fn level2(self) -> Self::Output {
-        let grouped = izip![
-            self.0.clone(),
-            self.0.clone().into_iter().skip(1),
-            self.0.clone().into_iter().skip(2)
-        ];
-
-        increases(grouped.map(|(a, b, c)| a + b + c).collect())
+        increases(
+            self.0
+                .into_iter()
+                .tuple_windows()
+                .map(|(a, b, c)| a + b + c),
+        )
     }
 }
