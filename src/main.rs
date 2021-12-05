@@ -81,10 +81,18 @@ struct Opts {
 
     #[clap(arg_enum, default_value = "print")]
     mode: Mode,
+
+    #[clap(short, parse(from_occurrences))]
+    verbose: usize,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let opts: Opts = Opts::parse();
+
+    stderrlog::new()
+        .timestamp(stderrlog::Timestamp::Off)
+        .verbosity(opts.verbose)
+        .init()?;
 
     println!("AoC - 2021");
 
