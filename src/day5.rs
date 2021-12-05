@@ -12,20 +12,19 @@ impl Pt {
         Pt { x, y }
     }
 
-    fn down(&self) -> Pt {
-        Pt::new(self.x, self.y + 1)
-    }
-
-    fn up(&self) -> Pt {
-        Pt::new(self.x, self.y - 1)
-    }
-
-    fn left(&self) -> Pt {
-        Pt::new(self.x - 1, self.y)
-    }
-
-    fn right(&self) -> Pt {
-        Pt::new(self.x + 1, self.y)
+    // assumes 45 degree diagonals only
+    fn approach(&self, other: &Pt) -> Pt {
+        let x = match self.x.cmp(&other.x) {
+            std::cmp::Ordering::Less => self.x + 1,
+            std::cmp::Ordering::Greater => self.x - 1,
+            _ => self.x,
+        };
+        let y = match self.y.cmp(&other.y) {
+            std::cmp::Ordering::Less => self.y + 1,
+            std::cmp::Ordering::Greater => self.y - 1,
+            _ => self.y,
+        };
+        Pt::new(x, y)
     }
 }
 
@@ -41,28 +40,26 @@ impl Line {
         self.0.y == self.1.y
     }
 
-    fn y_ext(&self) -> (u32, u32) {
-        (self.0.y.min(self.1.y), self.0.y.max(self.1.y))
-    }
-    fn x_ext(&self) -> (u32, u32) {
-        (self.0.x.min(self.1.x), self.0.x.max(self.1.x))
-    }
-
     fn pts(&self) -> Vec<Pt> {
-        if self.is_vertical() {
-            let (min, max) = self.y_ext();
-            (min..=max)
-                .into_iter()
-                .map(|y| Pt::new(self.0.x, y))
-                .collect_vec()
-        } else {
-            let (min, max) = self.x_ext();
-            (min..=max)
-                .into_iter()
-                .map(|x| Pt::new(x, self.0.y))
-                .collect_vec()
+        let mut pt = self.0;
+        let mut pts = Vec::new();
+        while pt != self.1 {
+            pts.push(pt);
+            pt = pt.approach(&self.1);
         }
+        pts.push(pt);
+        pts
     }
+}
+
+fn dangerous_pts(lines: impl Iterator<Item = Line>) -> usize {
+    lines
+        .flat_map(|line| line.pts().into_iter())
+        .sorted() // dedup_with_count dedups sequences, not the whole iterator, so we sort first
+        .dedup_with_count()
+        .inspect(|d| debug!("{:?}", d))
+        .filter(|(count, _)| *count >= 2) // any pt with >= 2 intersecting lines is dangerous
+        .count()
 }
 
 pub struct Solution(Vec<Line>);
@@ -82,9 +79,9 @@ impl super::Solver for Solution {
 
     const LEVEL1: &'static str = "5";
 
-    const LEVEL2: &'static str = "???";
+    const LEVEL2: &'static str = "12";
 
-    type Output = String;
+    type Output = usize;
 
     fn parse(input: &str) -> Self
     where
@@ -113,19 +110,14 @@ impl super::Solver for Solution {
     }
 
     fn part1(self) -> Self::Output {
-        self.0
-            .into_iter()
-            .filter(|l| l.is_horiz() || l.is_vertical())
-            .flat_map(|line| line.pts().into_iter())
-            .sorted()
-            .dedup_with_count()
-            .inspect(|d| debug!("{:?}", d))
-            .filter(|(count, pt)| *count >= 2)
-            .count()
-            .to_string()
+        dangerous_pts(
+            self.0
+                .into_iter()
+                .filter(|l| l.is_horiz() || l.is_vertical()),
+        )
     }
 
     fn part2(self) -> Self::Output {
-        todo!()
+        dangerous_pts(self.0.into_iter())
     }
 }
