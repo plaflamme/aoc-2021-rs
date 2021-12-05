@@ -3,28 +3,26 @@ use log::debug;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Pt {
-    x: u32,
-    y: u32,
+    x: i32,
+    y: i32,
 }
 
 impl Pt {
     fn new(x: u32, y: u32) -> Self {
-        Pt { x, y }
+        Pt {
+            x: x as i32,
+            y: y as i32,
+        }
     }
 
     // assumes 45 degree diagonals only
     fn approach(&self, other: &Pt) -> Pt {
-        let x = match self.x.cmp(&other.x) {
-            std::cmp::Ordering::Less => self.x + 1,
-            std::cmp::Ordering::Greater => self.x - 1,
-            _ => self.x,
-        };
-        let y = match self.y.cmp(&other.y) {
-            std::cmp::Ordering::Less => self.y + 1,
-            std::cmp::Ordering::Greater => self.y - 1,
-            _ => self.y,
-        };
-        Pt::new(x, y)
+        let dx = (other.x - self.x).signum();
+        let dy = (other.y - self.y).signum();
+        Pt {
+            x: self.x + dx,
+            y: self.y + dy,
+        }
     }
 }
 
