@@ -55,16 +55,24 @@ where
         .map(|l| (l.0.x.max(l.1.x), l.0.y.max(l.1.y)))
         .fold((0, 0), |(x, y), (xx, yy)| (x.max(xx), y.max(yy)));
 
-    let mut freq_table = vec![0_u32; (max_x * (max_y + 1)) as usize];
+    let mut freq_table = vec![0_u8; (max_x * (max_y + 1)) as usize];
+    let mut count = 0;
     lines
         .into_iter()
         .flat_map(|line| line.pts().collect_vec())
-        .for_each(|pt| freq_table[(pt.x + (pt.y * max_y)) as usize] += 1);
-
-    freq_table
-        .into_iter()
-        .filter(|freq| *freq >= 2) // any pt with >= 2 intersecting lines is dangerous
-        .count()
+        .for_each(|pt| {
+            let freq = &mut freq_table[(pt.x + (pt.y * max_y)) as usize];
+            match *freq {
+                0 => *freq = 1,
+                1 => {
+                    // any pt with >= 2 intersecting lines is dangerous
+                    *freq = 2;
+                    count += 1;
+                }
+                _ => (),
+            }
+        });
+    count
 }
 
 pub struct Solution(Vec<Line>);
