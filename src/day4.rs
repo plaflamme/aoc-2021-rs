@@ -1,5 +1,7 @@
 use itertools::Itertools;
 
+use crate::tools::empty_line_delimited_batches;
+
 #[derive(Clone, Debug)]
 struct Board {
     cells: Vec<u32>,
@@ -141,27 +143,20 @@ impl super::Solver for Solution {
         let nums = lines.next().unwrap();
         let nums = nums.split(',').map(|n| n.parse::<u32>().unwrap()).collect();
 
-        lines.next();
-        let (mut boards, last_board) = lines.fold(
-            (Vec::new(), Vec::new()),
-            |(mut boards, mut cells), line| match line {
-                "" => {
-                    boards.push(Board::new(cells));
-                    (boards, Vec::new())
-                }
-                nums => {
-                    let row = nums
-                        .split(' ')
-                        .filter(|n| !n.is_empty())
-                        .map(|n| n.parse::<u32>().unwrap())
-                        .collect();
-                    cells.push(row);
-                    (boards, cells)
-                }
-            },
-        );
-
-        boards.push(Board::new(last_board));
+        let boards = empty_line_delimited_batches(lines)
+            .map(|board| {
+                let cells = board
+                    .into_iter()
+                    .map(|row| {
+                        row.split(' ')
+                            .filter(|n| !n.is_empty())
+                            .map(|n| n.parse::<u32>().unwrap())
+                            .collect_vec()
+                    })
+                    .collect_vec();
+                Board::new(cells)
+            })
+            .collect_vec();
 
         Solution(nums, boards)
     }
