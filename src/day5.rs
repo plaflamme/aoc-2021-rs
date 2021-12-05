@@ -40,24 +40,22 @@ impl Line {
         self.0.y == self.1.y
     }
 
-    fn pts(&self) -> Vec<Pt> {
-        let mut pt = self.0;
-        let mut pts = Vec::new();
-        while pt != self.1 {
-            pts.push(pt);
-            pt = pt.approach(&self.1);
-        }
-        pts.push(pt);
-        pts
+    fn pts(&self) -> impl Iterator<Item = Pt> + '_ {
+        itertools::iterate(self.0, |pt| pt.approach(&self.1))
+            .take_while(|pt| *pt != self.1)
+            .chain(std::iter::once(self.1))
     }
 }
 
-fn dangerous_pts(lines: impl Iterator<Item = Line>) -> usize {
+fn dangerous_pts<T>(lines: T) -> usize
+where
+    T: IntoIterator<Item = Line>,
+{
     lines
-        .flat_map(|line| line.pts().into_iter())
+        .into_iter()
+        .flat_map(|line| line.pts().collect_vec())
         .sorted() // dedup_with_count dedups sequences, not the whole iterator, so we sort first
         .dedup_with_count()
-        .inspect(|d| debug!("{:?}", d))
         .filter(|(count, _)| *count >= 2) // any pt with >= 2 intersecting lines is dangerous
         .count()
 }
@@ -101,7 +99,6 @@ impl super::Solver for Solution {
                 }
                 Line(pt(from), pt(to))
             })
-            .inspect(|line| debug!("{:?} -> {:?}", line, line.pts()))
             .collect_vec();
 
         debug!("{:?}", lines);
@@ -118,6 +115,6 @@ impl super::Solver for Solution {
     }
 
     fn part2(self) -> Self::Output {
-        dangerous_pts(self.0.into_iter())
+        dangerous_pts(self.0)
     }
 }
