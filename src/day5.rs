@@ -47,14 +47,23 @@ impl Line {
 
 fn dangerous_pts<T>(lines: T) -> usize
 where
-    T: IntoIterator<Item = Line>,
+    T: IntoIterator<Item = Line> + Clone,
 {
+    let (max_x, max_y) = lines
+        .clone()
+        .into_iter()
+        .map(|l| (l.0.x.max(l.1.x), l.0.y.max(l.1.y)))
+        .fold((0, 0), |(x, y), (xx, yy)| (x.max(xx), y.max(yy)));
+
+    let mut freq_table = vec![0_u32; (max_x * (max_y + 1)) as usize];
     lines
         .into_iter()
         .flat_map(|line| line.pts().collect_vec())
-        .sorted() // dedup_with_count dedups sequences, not the whole iterator, so we sort first
-        .dedup_with_count()
-        .filter(|(count, _)| *count >= 2) // any pt with >= 2 intersecting lines is dangerous
+        .for_each(|pt| freq_table[(pt.x + (pt.y * max_y)) as usize] += 1);
+
+    freq_table
+        .into_iter()
+        .filter(|freq| *freq >= 2) // any pt with >= 2 intersecting lines is dangerous
         .count()
 }
 
