@@ -12,6 +12,7 @@ fn increases(depths: impl Iterator<Item = u32>) -> usize {
 }
 
 impl super::Solver for Solution {
+    const DAY: u8 = 1;
     const SAMPLE: &'static str = "199
 200
 208

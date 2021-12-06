@@ -1,5 +1,6 @@
 #![feature(drain_filter)]
 pub trait Solver {
+    const DAY: u8;
     const SAMPLE: &'static str;
     const LEVEL1: &'static str;
     const LEVEL2: &'static str;

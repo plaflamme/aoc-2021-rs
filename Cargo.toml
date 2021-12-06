@@ -11,3 +11,10 @@ anyhow = "1.0.51"
 termion = "1.5.6"
 log = "0.4.14"
 stderrlog = "0.5.1"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "all"
+harness = false

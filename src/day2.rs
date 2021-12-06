@@ -70,6 +70,7 @@ impl AimedPosition {
 }
 
 impl super::Solver for Solution {
+    const DAY: u8 = 2;
     const SAMPLE: &'static str = "forward 5
 down 5
 forward 8

@@ -78,6 +78,7 @@ where
 pub struct Solution(Vec<Line>);
 
 impl super::Solver for Solution {
+    const DAY: u8 = 5;
     const SAMPLE: &'static str = "0,9 -> 5,9
 8,0 -> 0,8
 9,4 -> 3,4
