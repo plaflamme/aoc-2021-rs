@@ -7,7 +7,7 @@ use log::debug;
 struct Colony([usize; 9], usize);
 
 impl Colony {
-    fn step(&mut self) -> usize {
+    fn step(&mut self) {
         let gen_0 = self.0[0];
         for gen in 1..9 {
             let gen_freq = self.0[gen];
@@ -16,7 +16,15 @@ impl Colony {
         self.0[6] += gen_0;
         self.0[8] = gen_0;
         self.1 += 1;
-        self.1
+    }
+
+    fn simulate(&mut self, to_gen: usize) -> usize {
+        let mut gen = self.1;
+        while gen != to_gen {
+            self.step();
+            gen = self.1;
+        }
+        self.size()
     }
 
     fn size(&self) -> usize {
@@ -30,7 +38,7 @@ impl super::Solver for Solution {
     const DAY: u8 = 6;
     const SAMPLE: &'static str = "3,4,3,1,2";
     const LEVEL1: &'static str = "5934";
-    const LEVEL2: &'static str = "???";
+    const LEVEL2: &'static str = "26984457539";
 
     type Output = usize;
 
@@ -52,15 +60,10 @@ impl super::Solver for Solution {
     }
 
     fn part1(mut self) -> Self::Output {
-        let mut day = self.0.step();
-        while day != 80 {
-            debug!("freq: {:?}", self.0 .0);
-            day = self.0.step();
-        }
-        self.0.size()
+        self.0.simulate(80)
     }
 
-    fn part2(self) -> Self::Output {
-        todo!()
+    fn part2(mut self) -> Self::Output {
+        self.0.simulate(256)
     }
 }
