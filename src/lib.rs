@@ -16,6 +16,7 @@ pub trait Solver {
     fn part2(self) -> Self::Output;
 }
 
+pub mod grid;
 pub(crate) mod tools;
 
 pub mod day1;
