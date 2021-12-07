@@ -119,7 +119,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 4 => run_day::<day4::Solution>(&mut aoc, opts.mode, part),
                 5 => run_day::<day5::Solution>(&mut aoc, opts.mode, part),
                 6 => run_day::<day6::Solution>(&mut aoc, opts.mode, part),
-                7..=24 => Ok("not implemented".to_string()),
+                7 => run_day::<day7::Solution>(&mut aoc, opts.mode, part),
+                8..=24 => Ok("not implemented".to_string()),
                 _ => panic!("invalid day {}, must be [1,24]", day),
             }?;
             println!("{}", result);
