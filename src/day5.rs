@@ -106,11 +106,11 @@ impl super::Solver for Solution {
             .map(|l| {
                 let (from, to) = l
                     .split_once(" -> ")
-                    .expect(format!("invalid line {}", l).as_str());
+                    .unwrap_or_else(|| panic!("invalid line {}", l));
                 fn pt(s: &str) -> Pt {
                     let (x, y) = s
                         .split_once(',')
-                        .expect(format!("invalid pt {}", s).as_str());
+                        .unwrap_or_else(|| panic!("invalid pt {}", s));
                     Pt::new(x.parse::<u32>().unwrap(), y.parse::<u32>().unwrap())
                 }
                 Line(pt(from), pt(to))
