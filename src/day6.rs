@@ -19,10 +19,8 @@ impl Colony {
     }
 
     fn simulate(&mut self, to_gen: usize) -> usize {
-        let mut gen = self.1;
-        while gen != to_gen {
+        for _ in self.1..to_gen {
             self.step();
-            gen = self.1;
         }
         self.size()
     }
