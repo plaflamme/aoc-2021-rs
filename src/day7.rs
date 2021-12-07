@@ -1,5 +1,15 @@
 pub struct Solution(Vec<u32>);
 
+fn fuel_cost(max: u32) -> Vec<u32> {
+    (0..=max)
+        .into_iter()
+        .scan(0_u32, |cost, distance| {
+            *cost += distance as u32;
+            Some(*cost)
+        })
+        .collect()
+}
+
 impl super::Solver for Solution {
     const DAY: u8 = 7;
 
@@ -7,7 +17,7 @@ impl super::Solver for Solution {
 
     const LEVEL1: &'static str = "37";
 
-    const LEVEL2: &'static str = "???";
+    const LEVEL2: &'static str = "168";
 
     type Output = u32;
 
@@ -37,6 +47,14 @@ impl super::Solver for Solution {
     }
 
     fn part2(self) -> Self::Output {
-        todo!()
+        let max = self.0.clone().into_iter().max().unwrap() as usize;
+        let cost = fuel_cost(max as u32);
+        let mut fuel_use = vec![0_u32; max];
+        self.0.into_iter().for_each(|c| {
+            for pos in 0..max {
+                fuel_use[pos] += cost[(c as i32 - pos as i32).abs() as usize]
+            }
+        });
+        fuel_use.into_iter().min().unwrap()
     }
 }
