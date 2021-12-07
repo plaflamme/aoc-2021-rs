@@ -1,4 +1,4 @@
-use aocf::{Aoc, Level};
+use aocf::Aoc;
 use clap::Parser;
 use std::error::Error;
 use std::num::ParseIntError;
@@ -11,24 +11,6 @@ enum Mode {
     Sample,
     Print,
     Submit,
-}
-
-#[derive(Debug, Clone, Copy)]
-enum Part {
-    One,
-    Two,
-}
-
-impl std::str::FromStr for Part {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_ascii_lowercase().as_str() {
-            "1" | "one" => Ok(Part::One),
-            "2" | "two" => Ok(Part::Two),
-            _ => Err(anyhow::anyhow!("invalid puzzle part {}", s)),
-        }
-    }
 }
 
 enum Days {
@@ -96,89 +78,60 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("AoC - 2021");
 
+    let parts: Vec<Part> = match opts.part {
+        None => vec![Part::One, Part::Two],
+        Some(part) => vec![part],
+    };
+
     for day in opts.days {
         println!("Day {}", day);
-
-        let mut aoc = Aoc::new()
-            .parse_cli(false)
-            .year(Some(2021))
-            .day(Some(day as u32))
-            .init()?;
-
-        let parts: Vec<Part> = match opts.part {
-            None => vec![Part::One, Part::Two],
-            Some(part) => vec![part],
+        match day {
+            1 => run_day(Day1, Main, parts.clone(), opts.mode, day1::SAMPLE),
+            7..=24 => break,
+            _ => panic!("invalid day {}, must be [1,24]", day),
         };
-
-        for part in parts {
-            print!("  - part {:?} ... ", part);
-            let result = match day {
-                1 => run_day::<day1::Solution>(&mut aoc, opts.mode, part),
-                2 => run_day::<day2::Solution>(&mut aoc, opts.mode, part),
-                3 => run_day::<day3::Solution>(&mut aoc, opts.mode, part),
-                4 => run_day::<day4::Solution>(&mut aoc, opts.mode, part),
-                5 => run_day::<day5::Solution>(&mut aoc, opts.mode, part),
-                6 => run_day::<day6::Solution>(&mut aoc, opts.mode, part),
-                7..=24 => Ok("not implemented".to_string()),
-                _ => panic!("invalid day {}, must be [1,24]", day),
-            }?;
-            println!("{}", result);
-        }
     }
     Ok(())
 }
-macro_rules! timed {
-    ($e: expr) => {{
-        use std::time::Instant;
-        let start = Instant::now();
-        let solution = { $e };
-        (solution, start.elapsed())
-    }};
+
+fn run_day<D: Day, A>(day: D, alt: A, parts: Vec<Part>, mode: Mode, sample: impl Input + 'static)
+where
+    D: Solver<A>,
+    A: core::fmt::Debug,
+{
+    let mut input = load_input(day, mode, sample);
+    let loaded = input.load();
+    for part in parts {
+        print!("  - part {:?} ... {:?} ... ", part, alt);
+        let (solution, duration) = solve_part::<D, A>(&loaded, part);
+        let qualifier = match input.solution(part) {
+            Some(expected) if solution.to_string() == expected => {
+                format!("({}correct{})", color::Fg(color::Green), style::Reset)
+            }
+            Some(expected) => {
+                format!(
+                    "({}incorrect{}, expected {})",
+                    color::Fg(color::Red),
+                    style::Reset,
+                    expected
+                )
+            }
+            None => "(???)".to_string(),
+        };
+        println!("{:?} {} {}", duration, solution.to_string(), qualifier);
+    }
 }
 
-fn run_day<T>(aoc: &mut Aoc, mode: Mode, part: Part) -> Result<String, Box<dyn Error>>
-where
-    T: Solver,
-{
-    let level = match part {
-        Part::One => Level::First,
-        Part::Two => Level::Second,
-    };
-    let input = match mode {
-        Mode::Sample => <T as Solver>::SAMPLE.to_string(),
-        _ => aoc.get_input(false)?,
-    };
-    let expected = match (mode, level) {
-        (Mode::Sample, Level::First) => Some(<T as Solver>::LEVEL1.to_string()),
-        (Mode::Sample, Level::Second) => Some(<T as Solver>::LEVEL2.to_string()),
-        (_, level) => aoc.solution.get(&level).cloned(),
-    };
-    let solver = <T as Solver>::parse(&input);
-    let (solution, duration) = match level {
-        Level::First => timed!(solver.part1()),
-        Level::Second => timed!(solver.part2()),
-    };
-
-    let result = match mode {
-        Mode::Print | Mode::Sample => {
-            let qualifier = match expected {
-                Some(expected) if solution.to_string() == expected => {
-                    format!("({}correct{})", color::Fg(color::Green), style::Reset)
-                }
-                Some(expected) => {
-                    format!(
-                        "({}incorrect{}, expected {})",
-                        color::Fg(color::Red),
-                        style::Reset,
-                        expected
-                    )
-                }
-                None => "(???)".to_string(),
-            };
-            format!("{:?} {} {}", duration, solution.to_string(), qualifier)
-        }
-        Mode::Submit => aoc.submit(&solution.to_string())?,
-    };
-
-    Ok(result)
+fn load_input<D: Day>(_day: D, mode: Mode, sample: impl Input + 'static) -> Box<dyn Input> {
+    match mode {
+        Mode::Sample => Box::new(sample),
+        _ => Box::new(
+            Aoc::new()
+                .parse_cli(false)
+                .year(Some(2021))
+                .day(Some(<D as Day>::DAY as u32))
+                .init()
+                .unwrap(),
+        ),
+    }
 }
