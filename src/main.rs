@@ -49,7 +49,7 @@ impl std::str::FromStr for Days {
         } else {
             Ok(Days::Set(
                 s.split(',')
-                    .map(|c| u8::from_str(c))
+                    .map(u8::from_str)
                     .collect::<Result<Vec<u8>, ParseIntError>>()?,
             ))
         }
