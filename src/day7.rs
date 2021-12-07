@@ -10,6 +10,17 @@ fn fuel_cost(max: u32) -> Vec<u32> {
         .collect()
 }
 
+fn solve(crabs: Vec<u32>, fuel_cost: impl Fn(u32) -> u32) -> u32 {
+    let max = crabs.clone().into_iter().max().unwrap() as usize;
+    let mut fuel_use = vec![0_u32; max + 1];
+    crabs.into_iter().for_each(|c| {
+        for pos in 0..=max {
+            fuel_use[pos] += fuel_cost((c as i32 - pos as i32).abs() as u32)
+        }
+    });
+    fuel_use.into_iter().min().unwrap()
+}
+
 impl super::Solver for Solution {
     const DAY: u8 = 7;
 
@@ -36,25 +47,12 @@ impl super::Solver for Solution {
     }
 
     fn part1(self) -> Self::Output {
-        let max = self.0.clone().into_iter().max().unwrap() as usize;
-        let mut fuel_use = vec![0_u32; max];
-        self.0.into_iter().for_each(|c| {
-            for pos in 0..max {
-                fuel_use[pos] += (c as i32 - pos as i32).abs() as u32
-            }
-        });
-        fuel_use.into_iter().min().unwrap()
+        solve(self.0, std::convert::identity)
     }
 
     fn part2(self) -> Self::Output {
         let max = self.0.clone().into_iter().max().unwrap() as usize;
-        let cost = fuel_cost(max as u32);
-        let mut fuel_use = vec![0_u32; max];
-        self.0.into_iter().for_each(|c| {
-            for pos in 0..max {
-                fuel_use[pos] += cost[(c as i32 - pos as i32).abs() as usize]
-            }
-        });
-        fuel_use.into_iter().min().unwrap()
+        let fuel_cost = fuel_cost(max as u32);
+        solve(self.0, |dist| fuel_cost[dist as usize])
     }
 }
