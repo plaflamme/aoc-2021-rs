@@ -14,8 +14,8 @@ fn solve(crabs: Vec<u32>, fuel_cost: impl Fn(u32) -> u32) -> u32 {
     let max = crabs.clone().into_iter().max().unwrap() as usize;
     let mut fuel_use = vec![0_u32; max + 1];
     crabs.into_iter().for_each(|c| {
-        for pos in 0..=max {
-            fuel_use[pos] += fuel_cost((c as i32 - pos as i32).abs() as u32)
+        for (pos, cost) in fuel_use.iter_mut().enumerate() {
+            *cost += fuel_cost((c as i32 - pos as i32).abs() as u32)
         }
     });
     fuel_use.into_iter().min().unwrap()
