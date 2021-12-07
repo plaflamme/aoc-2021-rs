@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 pub struct Solution(Vec<u32>);
 
 fn fuel_cost(max: u32) -> Vec<u32> {
@@ -11,14 +13,25 @@ fn fuel_cost(max: u32) -> Vec<u32> {
 }
 
 fn solve(crabs: Vec<u32>, fuel_cost: impl Fn(u32) -> u32) -> u32 {
-    let max = crabs.clone().into_iter().max().unwrap() as usize;
-    let mut fuel_use = vec![0_u32; max + 1];
-    crabs.into_iter().for_each(|c| {
-        for (pos, cost) in fuel_use.iter_mut().enumerate() {
-            *cost += fuel_cost((c as i32 - pos as i32).abs() as u32)
-        }
-    });
-    fuel_use.into_iter().min().unwrap()
+    crabs
+        .iter()
+        .counts_by(std::convert::identity)
+        .into_iter()
+        .sorted_by(|(_, freq1), (_, freq2)| freq1.cmp(freq2).reverse())
+        .map(|(pos, _)| *pos as usize)
+        // compute the fuel cost for each position, remembering the minimum we've seen
+        //   starting from the most frequent position, since that's the most likely minimum cost
+        //   short-circuiting when the fuel cost sum goes above the known minimum one
+        .fold(u32::MAX, |current_min, pos| {
+            let mut total_fuel_cost = 0;
+            for c in crabs.iter() {
+                total_fuel_cost += fuel_cost((*c as i32 - pos as i32).abs() as u32);
+                if total_fuel_cost >= current_min {
+                    return current_min;
+                }
+            }
+            total_fuel_cost
+        })
 }
 
 impl super::Solver for Solution {

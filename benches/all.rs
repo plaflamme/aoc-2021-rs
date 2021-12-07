@@ -36,5 +36,6 @@ criterion_group!(
     bench_day::<day4::Solution>,
     bench_day::<day5::Solution>,
     bench_day::<day6::Solution>,
+    bench_day::<day7::Solution>,
 );
 criterion_main!(benches);
