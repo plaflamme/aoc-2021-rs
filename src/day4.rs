@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::tools::empty_line_delimited_batches;
+use crate::{tools::empty_line_delimited_batches, Day4};
 
 #[derive(Clone, Debug)]
 struct Board {
@@ -106,10 +106,8 @@ impl Solution {
     }
 }
 
-impl super::Solver for Solution {
-    const DAY: u8 = 4;
-    const SAMPLE: &'static str =
-        "7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
+sample!(
+    "7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
 
 22 13 17 11  0
  8  2 23  4 24
@@ -128,15 +126,16 @@ impl super::Solver for Solution {
 18  8 23 26 20
 22 11 13  6  5
  2  0 12  3  7
-";
+",
+    "4512",
+    "1924"
+);
 
-    const LEVEL1: &'static str = "4512";
-
-    const LEVEL2: &'static str = "1924";
-
+impl super::Solver for Day4 {
     type Output = u32;
+    type Input = Solution;
 
-    fn parse(input: &str) -> Self
+    fn parse(input: &str) -> Self::Input
     where
         Self: Sized,
     {
@@ -162,15 +161,17 @@ impl super::Solver for Solution {
         Solution(nums, boards)
     }
 
-    fn part1(self) -> Self::Output {
-        self.solved_boards()
+    fn part1(input: Self::Input) -> Self::Output {
+        input
+            .solved_boards()
             .next()
             .expect("didn't find any solution :(")
             .0
     }
 
-    fn part2(self) -> Self::Output {
-        self.solved_boards()
+    fn part2(input: Self::Input) -> Self::Output {
+        input
+            .solved_boards()
             .max_by(|SolvedBoard(_, count), SolvedBoard(_, count2)| count.cmp(count2))
             .unwrap()
             .0
