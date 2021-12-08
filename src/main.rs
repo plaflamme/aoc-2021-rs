@@ -24,10 +24,10 @@ impl std::str::FromStr for Days {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some((from, to)) = s.split_once("..") {
             let from = u8::from_str(from).unwrap_or(1);
-            let to = u8::from_str(to).unwrap_or(24);
+            let to = u8::from_str(to).unwrap_or(25);
             Ok(Days::Range(from, to))
         } else if s.to_ascii_lowercase() == "all" {
-            Ok(Days::Range(1, 24))
+            Ok(Days::Range(1, 25))
         } else {
             Ok(Days::Set(
                 s.split(',')
@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             5 => run_main(Day5, parts.clone(), opts.mode, day5::SAMPLE),
             6 => run_main(Day6, parts.clone(), opts.mode, day6::SAMPLE),
             7 => run_main(Day7, parts.clone(), opts.mode, day7::SAMPLE),
-            8..=24 => println!("  not implemented"),
+            8..=25 => println!("  not implemented"),
             _ => panic!("invalid day {}, must be [1,24]", day),
         };
     }

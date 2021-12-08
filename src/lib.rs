@@ -41,6 +41,24 @@ day!(Day4, 4);
 day!(Day5, 5);
 day!(Day6, 6);
 day!(Day7, 7);
+day!(Day8, 8);
+day!(Day9, 9);
+day!(Day10, 10);
+day!(Day11, 11);
+day!(Day12, 12);
+day!(Day13, 13);
+day!(Day14, 14);
+day!(Day15, 15);
+day!(Day16, 16);
+day!(Day17, 17);
+day!(Day18, 18);
+day!(Day19, 19);
+day!(Day20, 20);
+day!(Day21, 21);
+day!(Day22, 22);
+day!(Day23, 23);
+day!(Day24, 24);
+day!(Day25, 25);
 
 pub trait Input {
     fn load(&mut self) -> String; // TODO: how do we make the Aoc implementation require &mut only?
