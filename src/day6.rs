@@ -3,8 +3,10 @@ use std::convert::identity;
 use itertools::Itertools;
 use log::debug;
 
+use crate::Day6;
+
 #[derive(Clone)]
-struct Colony([usize; 9], usize);
+pub struct Colony([usize; 9], usize);
 
 impl Colony {
     fn step(&mut self) {
@@ -30,17 +32,13 @@ impl Colony {
     }
 }
 
-pub struct Solution(Colony);
+sample!("3,4,3,1,2", "5934", "26984457539");
 
-impl super::Solver for Solution {
-    const DAY: u8 = 6;
-    const SAMPLE: &'static str = "3,4,3,1,2";
-    const LEVEL1: &'static str = "5934";
-    const LEVEL2: &'static str = "26984457539";
-
+impl super::Solver for Day6 {
     type Output = usize;
+    type Input = Colony;
 
-    fn parse(input: &str) -> Self
+    fn parse(input: &str) -> Self::Input
     where
         Self: Sized,
     {
@@ -54,14 +52,14 @@ impl super::Solver for Solution {
             freq_table[age as usize] = count;
         }
         debug!("freq: {:?}", freq_table);
-        Solution(Colony(freq_table, 0))
+        Colony(freq_table, 0)
     }
 
-    fn part1(mut self) -> Self::Output {
-        self.0.simulate(80)
+    fn part1(mut input: Self::Input) -> Self::Output {
+        input.simulate(80)
     }
 
-    fn part2(mut self) -> Self::Output {
-        self.0.simulate(256)
+    fn part2(mut input: Self::Input) -> Self::Output {
+        input.simulate(256)
     }
 }

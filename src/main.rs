@@ -91,6 +91,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             3 => run_main(Day3, parts.clone(), opts.mode, day3::SAMPLE),
             4 => run_main(Day4, parts.clone(), opts.mode, day4::SAMPLE),
             5 => run_main(Day5, parts.clone(), opts.mode, day5::SAMPLE),
+            6 => run_main(Day6, parts.clone(), opts.mode, day6::SAMPLE),
             7..=24 => break,
             _ => panic!("invalid day {}, must be [1,24]", day),
         };

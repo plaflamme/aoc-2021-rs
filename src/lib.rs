@@ -39,6 +39,7 @@ day!(Day2, 2);
 day!(Day3, 3);
 day!(Day4, 4);
 day!(Day5, 5);
+day!(Day6, 6);
 
 pub trait Input {
     fn load(&mut self) -> String; // TODO: how do we make the Aoc implementation require &mut only?
@@ -135,3 +136,4 @@ pub mod day2;
 pub mod day3;
 pub mod day4;
 pub mod day5;
+pub mod day6;
