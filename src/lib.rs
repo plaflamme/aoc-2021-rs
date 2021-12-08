@@ -90,14 +90,17 @@ where
 
 macro_rules! sample {
     ($day: path, $content: literal, $part1: literal, $part2: literal) => {
+        sample!($day, $content, $part1, Some($part2));
+    };
+    ($day: path, $content: literal, $part1: literal) => {
+        sample!($day, $content, $part1, None);
+    };
+    ($day: path, $content: literal, $part1: literal, $part2: expr) => {
         impl crate::Sample for $day {
             const CONTENT: &'static str = $content;
             const PART1: &'static str = $part1;
-            const PART2: Option<&'static str> = Some($part2);
+            const PART2: Option<&'static str> = $part2;
         }
-    };
-    ($content: expr, $part1: expr) => {
-        sample!($content, $part1, None);
     };
 }
 
@@ -155,3 +158,4 @@ pub mod day4;
 pub mod day5;
 pub mod day6;
 pub mod day7;
+pub mod day8;

@@ -102,7 +102,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             5 => run!(Day5),
             6 => run!(Day6),
             7 => run!(Day7),
-            8..=25 => println!("  not implemented"),
+            8 => run!(Day8),
+            9..=25 => println!("  not implemented"),
             _ => panic!("invalid day {}, must be [1,24]", day),
         };
     }
