@@ -83,28 +83,30 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(part) => vec![part],
     };
 
+    macro_rules! run {
+        ($d: path) => {
+            run!($d, Main)
+        };
+        ($d: path, $($alt: path),+) => {{
+            $(run_alt($d, $alt, parts.clone(), opts.mode));+
+        }};
+    }
+
     for day in opts.days {
         println!("Day {}", day);
         match day {
-            1 => run_main(Day1, parts.clone(), opts.mode),
-            2 => run_main(Day2, parts.clone(), opts.mode),
-            3 => run_main(Day3, parts.clone(), opts.mode),
-            4 => run_main(Day4, parts.clone(), opts.mode),
-            5 => run_main(Day5, parts.clone(), opts.mode),
-            6 => run_main(Day6, parts.clone(), opts.mode),
-            7 => run_main(Day7, parts.clone(), opts.mode),
+            1 => run!(Day1),
+            2 => run!(Day2),
+            3 => run!(Day3),
+            4 => run!(Day4),
+            5 => run!(Day5),
+            6 => run!(Day6),
+            7 => run!(Day7),
             8..=25 => println!("  not implemented"),
             _ => panic!("invalid day {}, must be [1,24]", day),
         };
     }
     Ok(())
-}
-
-fn run_main<D: Day>(day: D, parts: Vec<Part>, mode: Mode)
-where
-    D: Solver<Main> + Sample + Clone + 'static,
-{
-    run_alt(day, Main, parts, mode);
 }
 
 fn run_alt<D: Day, A>(day: D, alt: A, parts: Vec<Part>, mode: Mode)
