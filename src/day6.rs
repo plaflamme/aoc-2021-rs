@@ -32,7 +32,7 @@ impl Colony {
     }
 }
 
-sample!("3,4,3,1,2", "5934", "26984457539");
+sample!(Day6, "3,4,3,1,2", "5934", "26984457539");
 
 impl super::Solver for Day6 {
     type Output = usize;

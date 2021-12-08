@@ -86,13 +86,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     for day in opts.days {
         println!("Day {}", day);
         match day {
-            1 => run_main(Day1, parts.clone(), opts.mode, day1::SAMPLE),
-            2 => run_main(Day2, parts.clone(), opts.mode, day2::SAMPLE),
-            3 => run_main(Day3, parts.clone(), opts.mode, day3::SAMPLE),
-            4 => run_main(Day4, parts.clone(), opts.mode, day4::SAMPLE),
-            5 => run_main(Day5, parts.clone(), opts.mode, day5::SAMPLE),
-            6 => run_main(Day6, parts.clone(), opts.mode, day6::SAMPLE),
-            7 => run_main(Day7, parts.clone(), opts.mode, day7::SAMPLE),
+            1 => run_main(Day1, parts.clone(), opts.mode),
+            2 => run_main(Day2, parts.clone(), opts.mode),
+            3 => run_main(Day3, parts.clone(), opts.mode),
+            4 => run_main(Day4, parts.clone(), opts.mode),
+            5 => run_main(Day5, parts.clone(), opts.mode),
+            6 => run_main(Day6, parts.clone(), opts.mode),
+            7 => run_main(Day7, parts.clone(), opts.mode),
             8..=25 => println!("  not implemented"),
             _ => panic!("invalid day {}, must be [1,24]", day),
         };
@@ -100,19 +100,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_main<D: Day>(day: D, parts: Vec<Part>, mode: Mode, sample: impl Input + 'static)
+fn run_main<D: Day>(day: D, parts: Vec<Part>, mode: Mode)
 where
-    D: Solver<Main>,
+    D: Solver<Main> + Sample + Clone + 'static,
 {
-    run_day(day, Main, parts, mode, sample);
+    run_alt(day, Main, parts, mode);
 }
 
-fn run_day<D: Day, A>(day: D, alt: A, parts: Vec<Part>, mode: Mode, sample: impl Input + 'static)
+fn run_alt<D: Day, A>(day: D, alt: A, parts: Vec<Part>, mode: Mode)
+where
+    D: Solver<A> + Sample + Clone + 'static,
+    A: core::fmt::Debug,
+{
+    run(day.clone(), alt, parts, mode, load_input(day, mode));
+}
+
+fn run<D: Day, A>(_day: D, alt: A, parts: Vec<Part>, mode: Mode, mut input: Box<dyn Input>)
 where
     D: Solver<A>,
     A: core::fmt::Debug,
 {
-    let mut input = load_input(day, mode, sample);
     let loaded = input.load();
     for part in parts {
         print!("  - part {:?} ... {:?} ... ", part, alt);
@@ -167,9 +174,9 @@ fn submit<D: Day>(part: Part, solution: String) {
     }
 }
 
-fn load_input<D: Day>(_day: D, mode: Mode, sample: impl Input + 'static) -> Box<dyn Input> {
+fn load_input<D: Day + Sample + 'static>(day: D, mode: Mode) -> Box<dyn Input> {
     match mode {
-        Mode::Sample => Box::new(sample),
+        Mode::Sample => Box::new(day),
         _ => Box::new(
             Aoc::new()
                 .parse_cli(false)

@@ -34,7 +34,7 @@ fn solve(crabs: Vec<u32>, fuel_cost: impl Fn(u32) -> u32) -> u32 {
         })
 }
 
-sample!("16,1,2,0,4,2,7,1,2,14", "37", "168");
+sample!(Day7, "16,1,2,0,4,2,7,1,2,14", "37", "168");
 
 impl super::Solver for Day7 {
     type Output = u32;

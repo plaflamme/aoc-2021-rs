@@ -50,6 +50,7 @@ impl Solution {
 }
 
 sample!(
+    crate::Day3,
     "
 00100
 11110

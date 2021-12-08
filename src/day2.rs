@@ -70,6 +70,7 @@ impl AimedPosition {
 }
 
 sample!(
+    crate::Day2,
     "forward 5
 down 5
 forward 8

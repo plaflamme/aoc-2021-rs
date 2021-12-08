@@ -2,6 +2,7 @@ use itertools::Itertools;
 use std::str::FromStr;
 
 sample!(
+    crate::Day1,
     "199
 200
 208

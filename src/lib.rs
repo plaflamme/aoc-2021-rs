@@ -27,6 +27,7 @@ pub trait Day {
 
 macro_rules! day {
     ($d: ident, $n: literal) => {
+        #[derive(Clone, Copy)]
         pub struct $d;
         impl Day for $d {
             const DAY: u8 = $n;
@@ -65,41 +66,38 @@ pub trait Input {
     fn solution(&self, part: Part) -> Option<String>;
 }
 
-pub struct Sample {
-    content: &'static str,
-    part1: &'static str,
-    part2: Option<&'static str>,
+pub trait Sample {
+    const CONTENT: &'static str;
+    const PART1: &'static str;
+    const PART2: Option<&'static str>;
 }
 
-impl Sample {
-    const fn new(content: &'static str, part1: &'static str, part2: Option<&'static str>) -> Self {
-        Sample {
-            content,
-            part1,
-            part2,
-        }
-    }
-}
-
-impl Input for Sample {
+impl<S> Input for S
+where
+    S: Sample,
+{
     fn load(&mut self) -> String {
-        self.content.to_string()
+        <S as Sample>::CONTENT.to_string()
     }
 
     fn solution(&self, part: Part) -> Option<String> {
         match part {
-            Part::One => Some(self.part1.to_string()),
-            Part::Two => self.part2.map(|s| s.to_string()),
+            Part::One => Some(<S as Sample>::PART1.to_string()),
+            Part::Two => <S as Sample>::PART2.map(|s| s.to_string()),
         }
     }
 }
 
 macro_rules! sample {
-    ($content: expr, $part1: expr, $part2: expr) => {
-        pub const SAMPLE: crate::Sample = crate::Sample::new($content, $part1, Some($part2));
+    ($day: path, $content: literal, $part1: literal, $part2: literal) => {
+        impl crate::Sample for $day {
+            const CONTENT: &'static str = $content;
+            const PART1: &'static str = $part1;
+            const PART2: Option<&'static str> = Some($part2);
+        }
     };
     ($content: expr, $part1: expr) => {
-        pub const SAMPLE: crate::Sample = crate::Sample::new($content, $part1, None);
+        sample!($content, $part1, None);
     };
 }
 
