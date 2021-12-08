@@ -1,5 +1,6 @@
 use itertools::Itertools;
-use log::debug;
+
+use crate::Day5;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Pt {
@@ -27,7 +28,7 @@ impl Pt {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Line(Pt, Pt);
+pub struct Line(Pt, Pt);
 
 impl Line {
     fn is_vertical(&self) -> bool {
@@ -75,11 +76,8 @@ where
     count
 }
 
-pub struct Solution(Vec<Line>);
-
-impl super::Solver for Solution {
-    const DAY: u8 = 5;
-    const SAMPLE: &'static str = "0,9 -> 5,9
+sample!(
+    "0,9 -> 5,9
 8,0 -> 0,8
 9,4 -> 3,4
 2,2 -> 2,1
@@ -89,19 +87,20 @@ impl super::Solver for Solution {
 3,4 -> 1,4
 0,0 -> 8,8
 5,5 -> 8,2
-";
+",
+    "5",
+    "12"
+);
 
-    const LEVEL1: &'static str = "5";
-
-    const LEVEL2: &'static str = "12";
-
+impl super::Solver for Day5 {
     type Output = usize;
+    type Input = Vec<Line>;
 
-    fn parse(input: &str) -> Self
+    fn parse(input: &str) -> Self::Input
     where
         Self: Sized,
     {
-        let lines = input
+        input
             .lines()
             .map(|l| {
                 let (from, to) = l
@@ -115,22 +114,18 @@ impl super::Solver for Solution {
                 }
                 Line(pt(from), pt(to))
             })
-            .collect_vec();
-
-        debug!("{:?}", lines);
-
-        Solution(lines)
+            .collect_vec()
     }
 
-    fn part1(self) -> Self::Output {
+    fn part1(input: Self::Input) -> Self::Output {
         dangerous_pts(
-            self.0
+            input
                 .into_iter()
                 .filter(|l| l.is_horiz() || l.is_vertical()),
         )
     }
 
-    fn part2(self) -> Self::Output {
-        dangerous_pts(self.0)
+    fn part2(input: Self::Input) -> Self::Output {
+        dangerous_pts(input)
     }
 }
