@@ -1,8 +1,8 @@
 use std::{error::Error, str::FromStr};
 
-pub struct Solution(Vec<Command>);
+use crate::Day2;
 
-enum Command {
+pub enum Command {
     Down(u32),
     Up(u32),
     Forward(u32),
@@ -69,40 +69,40 @@ impl AimedPosition {
     }
 }
 
-impl super::Solver for Solution {
-    const DAY: u8 = 2;
-    const SAMPLE: &'static str = "forward 5
+sample!(
+    "forward 5
 down 5
 forward 8
 up 3
 down 8
 forward 2
 
-";
-    const LEVEL1: &'static str = "150";
-    const LEVEL2: &'static str = "900";
+",
+    "150",
+    "900"
+);
 
+impl super::Solver for Day2 {
     type Output = i32;
+    type Input = Vec<Command>;
 
-    fn parse(input: &str) -> Self {
-        Self(
-            input
-                .lines()
-                .filter(|l| !l.is_empty())
-                .map(|l| Command::from_str(l).unwrap())
-                .collect(),
-        )
+    fn parse(input: &str) -> Self::Input {
+        input
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(|l| Command::from_str(l).unwrap())
+            .collect()
     }
 
-    fn part1(self) -> Self::Output {
+    fn part1(input: Self::Input) -> Self::Output {
         let mut pos = Position::new();
-        pos.apply_all(self.0);
+        pos.apply_all(input);
         pos.0 * pos.1
     }
 
-    fn part2(self) -> Self::Output {
+    fn part2(input: Self::Input) -> Self::Output {
         let mut pos = AimedPosition::new();
-        pos.apply_all(self.0);
+        pos.apply_all(input);
         pos.0 * pos.1
     }
 }

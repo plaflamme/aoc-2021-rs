@@ -21,14 +21,18 @@ impl std::str::FromStr for Part {
     }
 }
 
-pub struct Day1;
-
 pub trait Day {
     const DAY: u8;
 }
 
+pub struct Day1;
 impl Day for Day1 {
     const DAY: u8 = 1;
+}
+
+pub struct Day2;
+impl Day for Day2 {
+    const DAY: u8 = 2;
 }
 
 pub trait Input {
@@ -122,3 +126,4 @@ where
 pub(crate) mod tools;
 
 pub mod day1;
+pub mod day2;

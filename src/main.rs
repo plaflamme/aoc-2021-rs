@@ -86,12 +86,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     for day in opts.days {
         println!("Day {}", day);
         match day {
-            1 => run_day(Day1, Main, parts.clone(), opts.mode, day1::SAMPLE),
+            1 => run_main(Day1, parts.clone(), opts.mode, day1::SAMPLE),
+            2 => run_main(Day2, parts.clone(), opts.mode, day2::SAMPLE),
             7..=24 => break,
             _ => panic!("invalid day {}, must be [1,24]", day),
         };
     }
     Ok(())
+}
+
+fn run_main<D: Day>(day: D, parts: Vec<Part>, mode: Mode, sample: impl Input + 'static)
+where
+    D: Solver<Main>,
+{
+    run_day(day, Main, parts, mode, sample);
 }
 
 fn run_day<D: Day, A>(day: D, alt: A, parts: Vec<Part>, mode: Mode, sample: impl Input + 'static)
