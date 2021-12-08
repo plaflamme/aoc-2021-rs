@@ -132,6 +132,38 @@ where
             None => "(???)".to_string(),
         };
         println!("{:?} {} {}", duration, solution.to_string(), qualifier);
+        match mode {
+            Mode::Submit => {
+                submit::<D>(part, solution.to_string());
+            }
+            _ => (),
+        }
+    }
+}
+
+fn submit<D: Day>(part: Part, solution: String) {
+    let mut aoc = Aoc::new()
+        .parse_cli(false)
+        .year(Some(2021))
+        .day(Some(<D as Day>::DAY as u32))
+        .init()
+        .unwrap();
+
+    if let None = aoc.solution(part) {
+        println!(
+            "Submitting solution {} for day {} part {:?}",
+            solution,
+            D::DAY,
+            part
+        );
+
+        println!("{}", aoc.submit(&solution).unwrap());
+    } else {
+        println!(
+            "Solution for day {} part {:?} has already been accepted.",
+            D::DAY,
+            part
+        );
     }
 }
 
