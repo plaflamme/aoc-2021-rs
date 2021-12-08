@@ -58,10 +58,8 @@ where
 
     let mut freq_table = vec![0_u8; (max_x * (max_y + 1)) as usize];
     let mut count = 0;
-    lines
-        .into_iter()
-        .flat_map(|line| line.pts().collect_vec())
-        .for_each(|pt| {
+    for line in lines {
+        for pt in line.pts() {
             let freq = &mut freq_table[(pt.x + (pt.y * max_y)) as usize];
             match *freq {
                 0 => *freq = 1,
@@ -72,7 +70,8 @@ where
                 }
                 _ => (),
             }
-        });
+        }
+    }
     count
 }
 
