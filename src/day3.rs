@@ -1,3 +1,5 @@
+use crate::Day3;
+
 #[derive(Clone)]
 pub struct Solution(Vec<u32>, usize);
 
@@ -47,9 +49,8 @@ impl Solution {
     }
 }
 
-impl super::Solver for Solution {
-    const DAY: u8 = 3;
-    const SAMPLE: &'static str = "
+sample!(
+    "
 00100
 11110
 10110
@@ -62,15 +63,16 @@ impl super::Solver for Solution {
 11001
 00010
 01010
-";
+",
+    "198",
+    "230"
+);
 
-    const LEVEL1: &'static str = "198";
-
-    const LEVEL2: &'static str = "230";
-
+impl super::Solver for Day3 {
     type Output = u32;
+    type Input = Solution;
 
-    fn parse(input: &str) -> Self
+    fn parse(input: &str) -> Self::Input
     where
         Self: Sized,
     {
@@ -83,18 +85,18 @@ impl super::Solver for Solution {
         Solution(bits, width)
     }
 
-    fn part1(self) -> Self::Output {
-        let mut zeros = vec![0_u32; self.1];
-        let mut ones = vec![0_u32; self.1];
-        for bit in 0..self.1 {
-            let (zero_freq, one_freq) = self.bit_freq(bit);
+    fn part1(input: Self::Input) -> Self::Output {
+        let mut zeros = vec![0_u32; input.1];
+        let mut ones = vec![0_u32; input.1];
+        for bit in 0..input.1 {
+            let (zero_freq, one_freq) = input.bit_freq(bit);
             zeros[bit] = zero_freq;
             ones[bit] = one_freq;
         }
         let mut gamma = 0;
         let mut epsilon = 0;
-        for bit in 0..self.1 {
-            let mask = 1 << (self.1 - 1 - bit);
+        for bit in 0..input.1 {
+            let mask = 1 << (input.1 - 1 - bit);
             if ones[bit] > zeros[bit] {
                 gamma |= mask;
             } else {
@@ -105,16 +107,16 @@ impl super::Solver for Solution {
         epsilon * gamma
     }
 
-    fn part2(self) -> Self::Output {
-        let mut oxygen = self.clone();
-        for bit in 0..self.1 {
+    fn part2(input: Self::Input) -> Self::Output {
+        let mut oxygen = input.clone();
+        for bit in 0..input.1 {
             oxygen.filter_by_bit_criteria(bit, Criteria::Oxygen);
             if oxygen.0.len() == 1 {
                 break;
             }
         }
-        let mut co2 = self.clone();
-        for bit in 0..self.1 {
+        let mut co2 = input.clone();
+        for bit in 0..input.1 {
             co2.filter_by_bit_criteria(bit, Criteria::Co2);
             if co2.0.len() == 1 {
                 break;

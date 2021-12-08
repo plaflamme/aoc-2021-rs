@@ -25,15 +25,18 @@ pub trait Day {
     const DAY: u8;
 }
 
-pub struct Day1;
-impl Day for Day1 {
-    const DAY: u8 = 1;
+macro_rules! day {
+    ($d: ident, $n: literal) => {
+        pub struct $d;
+        impl Day for $d {
+            const DAY: u8 = $n;
+        }
+    };
 }
 
-pub struct Day2;
-impl Day for Day2 {
-    const DAY: u8 = 2;
-}
+day!(Day1, 1);
+day!(Day2, 2);
+day!(Day3, 3);
 
 pub trait Input {
     fn load(&mut self) -> String; // TODO: how do we make the Aoc implementation require &mut only?
@@ -127,3 +130,4 @@ pub(crate) mod tools;
 
 pub mod day1;
 pub mod day2;
+pub mod day3;
