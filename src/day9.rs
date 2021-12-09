@@ -1,4 +1,4 @@
-use std::iter::once;
+use std::{collections::HashSet, iter::once};
 
 use itertools::Itertools;
 
@@ -11,10 +11,11 @@ sample!(
 9856789892
 8767896789
 9899965678",
-    "15"
+    "15",
+    "1134"
 );
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Pt {
     y: u32,
     x: u32,
@@ -105,6 +106,29 @@ impl Grid {
                 .all(|depth| depth > this_depth)
         })
     }
+
+    fn rec_neighs(&self, pt: Pt, visited: &mut HashSet<Pt>) -> Vec<Pt> {
+        visited.insert(pt);
+        pt.neigh(self.width(), self.height())
+            .filter(|n| self.depth(n).unwrap() < 9)
+            .flat_map(|n| {
+                if !visited.contains(&n) {
+                    self.rec_neighs(n, visited)
+                } else {
+                    Vec::new()
+                }
+            })
+            .chain(once(pt))
+            .unique()
+            .collect()
+    }
+
+    fn basins(&self) -> impl Iterator<Item = Vec<Pt>> + '_ {
+        let mut visited = HashSet::new();
+        self.lows()
+            .map(move |pt| self.rec_neighs(pt, &mut visited))
+            .inspect(|b| log::debug!("{:?}", b))
+    }
 }
 
 impl Solver for Day9 {
@@ -139,6 +163,12 @@ impl Solver for Day9 {
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        todo!()
+        input
+            .basins()
+            .map(|basin| basin.len() as u32)
+            .sorted()
+            .rev()
+            .take(3)
+            .product::<u32>()
     }
 }
