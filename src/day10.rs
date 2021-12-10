@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use itertools::{Either, Itertools};
 
 use crate::{Day10, Solver};
 
@@ -18,70 +18,87 @@ sample!(
     "288957"
 );
 
-fn first_illegal_char(s: &str) -> Option<char> {
-    let mut stack = Vec::new();
-    for c in s.chars() {
-        match c {
-            '[' | '(' | '{' | '<' => stack.push(c),
-            ']' | ')' | '}' | '>' => match stack.pop() {
-                None => return Some(c),
-
-                Some(opening) => match (opening, c) {
-                    ('[', ']') | ('(', ')') | ('{', '}') | ('<', '>') => (),
-                    _ => {
-                        return Some(c);
-                    }
-                },
-            },
-            _ => panic!("illegal char {}", c),
-        }
-    }
-    None
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Paren {
+    Round,
+    Square,
+    Curly,
+    Pointy, // I guess?
 }
 
-fn closing_sequence(s: &str) -> Vec<char> {
-    let mut stack = Vec::new();
-    for c in s.chars() {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Dir {
+    Open,
+    Close,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Bracket(Paren, Dir);
+
+impl Bracket {
+    fn from_char(c: char) -> Self {
         match c {
-            '[' | '(' | '{' | '<' => stack.push(c),
-            ']' | ')' | '}' | '>' => {
-                stack.pop();
-            } //assumes the input was sanitized
-            _ => panic!("illegal char {}", c),
+            '[' => Bracket(Paren::Square, Dir::Open),
+            ']' => Bracket(Paren::Square, Dir::Close),
+            '(' => Bracket(Paren::Round, Dir::Open),
+            ')' => Bracket(Paren::Round, Dir::Close),
+            '{' => Bracket(Paren::Curly, Dir::Open),
+            '}' => Bracket(Paren::Curly, Dir::Close),
+            '<' => Bracket(Paren::Pointy, Dir::Open),
+            '>' => Bracket(Paren::Pointy, Dir::Close),
+            _ => panic!("invalid bracket {}", c),
         }
     }
-    stack
+}
+
+fn solve(input: Vec<Bracket>) -> Either<Paren, Vec<Paren>> {
+    let mut stack = Vec::new();
+
+    let invalid = input
         .into_iter()
-        .map(|c| match c {
-            '[' => ']',
-            '(' => ')',
-            '{' => '}',
-            '<' => '>',
-            _ => panic!("illegal opening {}", c),
+        .flat_map(|b| match b {
+            Bracket(p, Dir::Open) => {
+                stack.push(p);
+                None
+            }
+            Bracket(p, Dir::Close) => match stack.pop() {
+                None => Some(p),
+                Some(opening) if opening != p => Some(p),
+                _ => None,
+            },
         })
-        .rev()
-        .collect()
+        .at_most_one()
+        .unwrap();
+
+    if let Some(p) = invalid {
+        Either::Left(p)
+    } else {
+        stack.reverse();
+        Either::Right(stack)
+    }
 }
 
 impl Solver for Day10 {
     type Output = u32;
 
-    type Input = Vec<String>;
+    type Input = Vec<Vec<Bracket>>;
 
     fn parse(input: &str) -> Self::Input {
-        input.lines().map(|s| s.to_string()).collect()
+        input
+            .lines()
+            .map(|s| s.chars().map(Bracket::from_char).collect())
+            .collect()
     }
 
     fn part1(input: Self::Input) -> Self::Output {
         input
             .into_iter()
-            .flat_map(|l| first_illegal_char(&l))
+            .flat_map(|l| solve(l).left())
             .map(|c| match c {
-                ')' => 3,
-                ']' => 57,
-                '}' => 1197,
-                '>' => 25137,
-                _ => panic!("invalid illegal char {}", c),
+                Paren::Round => 3,
+                Paren::Square => 57,
+                Paren::Curly => 1197,
+                Paren::Pointy => 25137,
             })
             .sum::<u32>()
     }
@@ -89,21 +106,17 @@ impl Solver for Day10 {
     fn part2(input: Self::Input) -> Self::Output {
         let scores = input
             .into_iter()
-            .filter(|l| first_illegal_char(&l).is_none())
+            .flat_map(|l| solve(l).right())
             .map(|l| {
-                let seq = closing_sequence(&l);
-                log::debug!("seq: {:?}", seq);
-                seq.into_iter()
+                l.into_iter()
                     .map(|c| match c {
-                        ')' => 1,
-                        ']' => 2,
-                        '}' => 3,
-                        '>' => 4,
-                        _ => panic!("invalid closing char {}", c),
+                        Paren::Round => 1,
+                        Paren::Square => 2,
+                        Paren::Curly => 3,
+                        Paren::Pointy => 4,
                     })
                     .fold(0_u64, |score, char_score| score * 5 + char_score)
             })
-            .inspect(|s| log::debug!("score: {}", s))
             .sorted()
             .collect_vec();
 
