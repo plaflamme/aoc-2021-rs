@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use crate::{Day10, Solver};
 
 sample!(
@@ -12,13 +14,13 @@ sample!(
 [<(<(<(<{}))><([]([]()
 <{([([[(<>()){}]>(<<{{
 <{([{{}}[<[[[<>{}]]]>[]]",
-    "26397"
+    "26397",
+    "288957"
 );
 
 fn first_illegal_char(s: &str) -> Option<char> {
     let mut stack = Vec::new();
     for c in s.chars() {
-        log::debug!("char is {}", c);
         match c {
             '[' | '(' | '{' | '<' => stack.push(c),
             ']' | ')' | '}' | '>' => match stack.pop() {
@@ -35,6 +37,30 @@ fn first_illegal_char(s: &str) -> Option<char> {
         }
     }
     None
+}
+
+fn closing_sequence(s: &str) -> Vec<char> {
+    let mut stack = Vec::new();
+    for c in s.chars() {
+        match c {
+            '[' | '(' | '{' | '<' => stack.push(c),
+            ']' | ')' | '}' | '>' => {
+                stack.pop();
+            } //assumes the input was sanitized
+            _ => panic!("illegal char {}", c),
+        }
+    }
+    stack
+        .into_iter()
+        .map(|c| match c {
+            '[' => ']',
+            '(' => ')',
+            '{' => '}',
+            '<' => '>',
+            _ => panic!("illegal opening {}", c),
+        })
+        .rev()
+        .collect()
 }
 
 impl Solver for Day10 {
@@ -61,7 +87,27 @@ impl Solver for Day10 {
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        todo!()
+        let scores = input
+            .into_iter()
+            .filter(|l| first_illegal_char(&l).is_none())
+            .map(|l| {
+                let seq = closing_sequence(&l);
+                log::debug!("seq: {:?}", seq);
+                seq.into_iter()
+                    .map(|c| match c {
+                        ')' => 1,
+                        ']' => 2,
+                        '}' => 3,
+                        '>' => 4,
+                        _ => panic!("invalid closing char {}", c),
+                    })
+                    .fold(0_u64, |score, char_score| score * 5 + char_score)
+            })
+            .inspect(|s| log::debug!("score: {}", s))
+            .sorted()
+            .collect_vec();
+
+        scores[scores.len() / 2] as u32
     }
 }
 
