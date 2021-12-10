@@ -19,17 +19,11 @@ type Pt = crate::grid::Pt<u32>;
 type Grid = crate::grid::Grid<u32>;
 
 impl Grid {
-    fn depth(&self, pt: &Pt) -> Option<u32> {
-        Some(self[*pt])
-    }
-
     fn lows(&self) -> impl Iterator<Item = Pt> + '_ {
         self.pts().filter(|pt| {
-            let this_depth = self
-                .depth(pt)
-                .unwrap_or_else(|| panic!("invalid pt {:?}", pt));
+            let this_depth = self[*pt];
             pt.neighbours_checked(self.width() as u32, self.height() as u32)
-                .flat_map(|pt| self.depth(&pt))
+                .map(|pt| self[pt])
                 .all(|depth| depth > this_depth)
         })
     }
@@ -37,7 +31,7 @@ impl Grid {
     fn rec_neighs(&self, pt: Pt, visited: &mut HashSet<Pt>) -> Vec<Pt> {
         visited.insert(pt);
         pt.neighbours_checked(self.width() as u32, self.height() as u32)
-            .filter(|n| self.depth(n).unwrap() < 9)
+            .filter(|n| self[*n] < 9)
             .flat_map(|n| {
                 if !visited.contains(&n) {
                     self.rec_neighs(n, visited)
@@ -46,7 +40,6 @@ impl Grid {
                 }
             })
             .chain(once(pt))
-            .unique()
             .collect()
     }
 
@@ -77,10 +70,7 @@ impl Solver for Day9 {
     }
 
     fn part1(input: Self::Input) -> Self::Output {
-        input
-            .lows()
-            .map(|low| input.depth(&low).unwrap() + 1)
-            .sum::<u32>()
+        input.lows().map(|low| input[low] + 1).sum::<u32>()
     }
 
     fn part2(input: Self::Input) -> Self::Output {
