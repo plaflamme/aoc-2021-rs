@@ -67,28 +67,28 @@ impl Dir {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Coord<N = i32> {
+pub struct Pt<N = i32> {
     pub y: N, // comes before x for Ord
     pub x: N,
 }
 
 #[allow(non_snake_case)]
-pub const fn Coord<N>(x: N, y: N) -> Coord<N> {
-    Coord { x, y }
+pub const fn Pt<N>(x: N, y: N) -> Pt<N> {
+    Pt { x, y }
 }
 
-impl<N: Integer + Copy> Coord<N> {
+impl<N: Integer + Copy> Pt<N> {
     pub fn up(self) -> Self {
-        Coord(self.x, self.y - N::one())
+        Pt(self.x, self.y - N::one())
     }
     pub fn down(self) -> Self {
-        Coord(self.x, self.y + N::one())
+        Pt(self.x, self.y + N::one())
     }
     pub fn left(self) -> Self {
-        Coord(self.x - N::one(), self.y)
+        Pt(self.x - N::one(), self.y)
     }
     pub fn right(self) -> Self {
-        Coord(self.x + N::one(), self.y)
+        Pt(self.x + N::one(), self.y)
     }
     pub fn to(self, d: Dir) -> Self {
         match d {
@@ -154,7 +154,7 @@ impl<N: Integer + Copy> Coord<N> {
     }
 }
 
-impl<N: ToPrimitive> Coord<N> {
+impl<N: ToPrimitive> Pt<N> {
     fn to_usize(&self) -> (usize, usize) {
         let y = self.y.to_usize().expect("invalid Y coordinate");
         let x = self.x.to_usize().expect("invalid X coordinate");
@@ -206,7 +206,7 @@ impl<T> Grid<T> {
     }
 
     /// An iterator over the coordinates
-    pub fn coords<N>(&self) -> impl Iterator<Item = Coord<N>>
+    pub fn pts<N>(&self) -> impl Iterator<Item = Pt<N>>
     where
         N: Integer + Copy + FromPrimitive,
     {
@@ -215,7 +215,7 @@ impl<T> Grid<T> {
             .map(|(y, x)| {
                 let x = N::from_usize(x).expect("invalid width");
                 let y = N::from_usize(y).expect("invalid height");
-                Coord(x, y)
+                Pt(x, y)
             })
     }
 
@@ -224,7 +224,7 @@ impl<T> Grid<T> {
         self.values.chunks(self.w)
     }
 
-    pub fn neighbours_mut<N>(&mut self, coord: Coord<N>, mut f: impl FnMut(&mut T))
+    pub fn neighbours_mut<N>(&mut self, coord: Pt<N>, mut f: impl FnMut(&mut T))
     where
         N: Integer + Copy + FromPrimitive + ToPrimitive,
     {
@@ -236,23 +236,23 @@ impl<T> Grid<T> {
     }
 }
 
-impl<T, N> Index<Coord<N>> for Grid<T>
+impl<T, N> Index<Pt<N>> for Grid<T>
 where
     N: ToPrimitive,
 {
     type Output = T;
 
-    fn index(&self, index: Coord<N>) -> &Self::Output {
+    fn index(&self, index: Pt<N>) -> &Self::Output {
         let (x, y) = index.to_usize();
         &self.values[y * self.w + x]
     }
 }
 
-impl<T, N> IndexMut<Coord<N>> for Grid<T>
+impl<T, N> IndexMut<Pt<N>> for Grid<T>
 where
     N: ToPrimitive,
 {
-    fn index_mut(&mut self, index: Coord<N>) -> &mut Self::Output {
+    fn index_mut(&mut self, index: Pt<N>) -> &mut Self::Output {
         let (x, y) = index.to_usize();
         &mut self.values[y * self.w + x]
     }
