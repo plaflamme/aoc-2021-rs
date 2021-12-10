@@ -149,6 +149,7 @@ where
     (solution.to_string(), duration)
 }
 
+pub mod grid;
 pub(crate) mod tools;
 
 pub mod day1;
