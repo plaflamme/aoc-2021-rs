@@ -64,7 +64,7 @@ impl Solver for Day9 {
     type Input = Grid;
 
     fn parse(input: &str) -> Self::Input {
-        Grid::new(input.lines().filter(|l| !l.trim().is_empty()).map(|l| {
+        Grid::from_row_iter(input.lines().filter(|l| !l.trim().is_empty()).map(|l| {
             l.trim()
                 .chars()
                 .map(|c| {
