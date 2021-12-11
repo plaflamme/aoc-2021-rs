@@ -1,6 +1,9 @@
-use std::ops::{Index, IndexMut};
+use std::{
+    iter::once,
+    ops::{Index, IndexMut},
+};
 
-use itertools::Itertools;
+use itertools::{Either, FoldWhile, Itertools};
 use num::{FromPrimitive, Integer, Signed, ToPrimitive, Unsigned};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -149,8 +152,25 @@ impl<N: Integer + Copy> Pt<N> {
     pub fn neighbours(&self) -> impl Iterator<Item = Self> + '_ {
         Dir::all().map(|d| self.to(d))
     }
+    pub fn diagonals(&self) -> impl Iterator<Item = Self> + '_ {
+        once(Dir::Up).chain(once(Dir::Down)).flat_map(|d| {
+            let up_down = self.to(d);
+            once(up_down.to(Dir::Left)).chain(once(up_down.to(Dir::Right)))
+        })
+    }
     pub fn neighbours_checked(&self, w: N, h: N) -> impl Iterator<Item = Self> + '_ {
         Dir::all().flat_map(move |d| self.to_checked(d, w, h))
+    }
+    pub fn diagonals_checked(&self, w: N, h: N) -> impl Iterator<Item = Self> + '_ {
+        once(Dir::Up)
+            .chain(once(Dir::Down))
+            .flat_map(move |d| self.to_checked(d, w, h))
+            .flat_map(move |up_down| {
+                up_down
+                    .to_checked(Dir::Left, w, h)
+                    .into_iter()
+                    .chain(up_down.to_checked(Dir::Right, w, h))
+            })
     }
 }
 
