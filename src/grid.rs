@@ -133,6 +133,25 @@ impl<N: Integer + Copy> Pt<N> {
             }
         }
     }
+    // Tries to travel the specified directions. Returns `Right` if it travelled all the way, `Left` otherwise.
+    pub fn travel_checked(
+        &self,
+        dirs: impl IntoIterator<Item = Dir>,
+        w: N,
+        h: N,
+    ) -> Either<Self, Self> {
+        let traveled =
+            dirs.into_iter()
+                .fold_while(*self, |pt, dir| match pt.to_checked(dir, w, h) {
+                    None => FoldWhile::Done(pt),
+                    Some(pt) => FoldWhile::Continue(pt),
+                });
+
+        match traveled {
+            FoldWhile::Done(pt) => Either::Left(pt),
+            FoldWhile::Continue(pt) => Either::Right(pt),
+        }
+    }
     pub fn go_up(&mut self) {
         *self = self.up();
     }
@@ -441,6 +460,27 @@ mod test {
         assert!(n.contains(&Pt(0, 1)));
         let n = Pt(0, 0).neighbours_checked(1, 1).collect_vec();
         assert!(n.is_empty());
+    }
+    #[test]
+    fn test_pt_diagonals_checked() {
+        let n = Pt(1, 1).diagonals_checked(3, 3).collect_vec();
+        assert!(n.contains(&Pt(0, 0)));
+        assert!(n.contains(&Pt(2, 0)));
+        assert!(n.contains(&Pt(2, 2)));
+        assert!(n.contains(&Pt(0, 2)));
+
+        let n = Pt(0, 0).diagonals_checked(2, 2).collect_vec();
+        assert!(n.contains(&Pt(1, 1)));
+
+        let n = Pt(0, 0).diagonals_checked(1, 1).collect_vec();
+        assert!(n.is_empty());
+    }
+    #[test]
+    fn test_pt_travel_checked() {
+        let n = Pt(1_u8, 1).travel_checked(vec![Dir::Up, Dir::Down, Dir::Left, Dir::Right], 3, 3);
+        assert_eq!(n, Either::Right(Pt(1, 1)));
+        let n = Pt(1_u8, 1).travel_checked(vec![Dir::Up, Dir::Up], 3, 3);
+        assert_eq!(n, Either::Left(Pt(1, 0)));
     }
     #[test]
     fn test_pt_manhattan_distance() {
