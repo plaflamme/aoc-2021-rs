@@ -31,7 +31,7 @@ where
     c.bench_function(format!("d{}p2", day).as_str(), |b| {
         b.iter_batched(
             || <D as Solver<A>>::parse(input.as_str()),
-            |input| <D as Solver<A>>::part1(input),
+            |input| <D as Solver<A>>::part2(input),
             BatchSize::SmallInput,
         );
     });
