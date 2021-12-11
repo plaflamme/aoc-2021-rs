@@ -132,7 +132,7 @@ where
         print!("  - part {:?} ... {:?} ... ", part, alt);
         let (solution, duration) = solve_part::<D, A>(&loaded, part);
         let qualifier = match input.solution(part) {
-            Some(expected) if solution.to_string() == expected => {
+            Some(expected) if solution == expected => {
                 format!("({}correct{})", color::Fg(color::Green), style::Reset)
             }
             Some(expected) => {
@@ -145,12 +145,9 @@ where
             }
             None => "(???)".to_string(),
         };
-        println!("{:?} {} {}", duration, solution.to_string(), qualifier);
-        match mode {
-            Mode::Submit => {
-                submit::<D>(part, solution.to_string());
-            }
-            _ => (),
+        println!("{:?} {} {}", duration, solution, qualifier);
+        if let Mode::Submit = mode {
+            submit::<D>(part, solution.to_string());
         }
     }
 }
@@ -163,7 +160,7 @@ fn submit<D: Day>(part: Part, solution: String) {
         .init()
         .unwrap();
 
-    if let None = aoc.solution(part) {
+    if aoc.solution(part).is_none() {
         println!(
             "Submitting solution {} for day {} part {:?}",
             solution,

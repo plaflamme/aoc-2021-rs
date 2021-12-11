@@ -101,7 +101,7 @@ impl<N: Integer + Copy> Pt<N> {
             Dir::Right => self.right(),
         }
     }
-    pub fn to_checked(&self, d: Dir, w: N, h: N) -> Option<Self> {
+    pub fn to_checked(self, d: Dir, w: N, h: N) -> Option<Self> {
         match d {
             Dir::Up => {
                 if self.y > N::zero() {

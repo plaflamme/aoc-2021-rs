@@ -184,15 +184,9 @@ impl Solver for Day8 {
             .map(|l| {
                 let (s, out) = l.split_once(" | ").unwrap();
 
-                let signals = s
-                    .split_ascii_whitespace()
-                    .map(|s| Signal::from_str(s))
-                    .collect();
+                let signals = s.split_ascii_whitespace().map(Signal::from_str).collect();
 
-                let outputs = out
-                    .split_ascii_whitespace()
-                    .map(|s| Signal::from_str(s))
-                    .collect();
+                let outputs = out.split_ascii_whitespace().map(Signal::from_str).collect();
 
                 Reading(Panel(signals), outputs)
             })
@@ -204,14 +198,12 @@ impl Solver for Day8 {
         input
             .into_iter()
             .map(|reading| {
-                let count = reading
+                reading
                     .1
-                    .clone()
                     .into_iter()
                     .map(|s| s.n_bits())
                     .filter(|n| uniques.contains(n))
-                    .count() as u32;
-                count
+                    .count() as u32
             })
             .sum::<u32>()
     }
