@@ -21,17 +21,7 @@ sample!(
 );
 
 type Pt = crate::grid::Pt<u8>;
-type Grid = crate::grid::Grid<Octopus>;
-
-pub struct Octopus {
-    energy: u8,
-}
-
-impl Octopus {
-    fn new(energy: u8) -> Self {
-        Self { energy }
-    }
-}
+type Grid = crate::grid::Grid<u8>;
 
 fn step(grid: &mut Grid) -> HashSet<Pt> {
     let mut flashed = HashSet::new();
@@ -44,14 +34,14 @@ fn step(grid: &mut Grid) -> HashSet<Pt> {
                 continue;
             }
             let o = &mut grid[pt];
-            o.energy += 1;
-            if o.energy > 9 {
+            *o += 1;
+            if *o > 9 {
                 to_flash.insert(pt);
             }
         }
         for pt in to_flash.drain() {
             if flashed.insert(pt) {
-                grid[pt].energy = 0;
+                grid[pt] = 0;
                 let (w, h) = (grid.width() as u8, grid.height() as u8);
                 let new = pt
                     .neighbours_checked(w, h)
@@ -73,11 +63,9 @@ impl Solver for Day11 {
     fn parse(input: &str) -> Self::Input {
         Grid::from_iter(
             10,
-            input.lines().flat_map(|l| {
-                l.chars()
-                    .map(|c| c.to_string().parse::<u8>().unwrap())
-                    .map(Octopus::new)
-            }),
+            input
+                .lines()
+                .flat_map(|l| l.chars().map(|c| c.to_string().parse::<u8>().unwrap())),
         )
     }
 
@@ -107,7 +95,8 @@ mod test {
     use crate::Sample;
     #[test]
     fn test_steps() {
-        let state = "6594254334
+        let expected = vec![
+            "6594254334
 3856965822
 6375667284
 7252447257
@@ -116,19 +105,8 @@ mod test {
 3287952832
 7993992245
 5957959665
-6394862637";
-
-        let mut grid = Day11::parse(Day11::CONTENT);
-        step(&mut grid);
-        let out = grid
-            .rows_iter()
-            .map(|row| row.iter().map(|o| o.energy.to_string()).join(""))
-            .join("\n");
-
-        assert_eq!(out, state);
-        step(&mut grid);
-
-        let state = "8807476555
+6394862637",
+            "8807476555
 5089087054
 8597889608
 8485769600
@@ -137,17 +115,8 @@ mod test {
 6800005943
 0000007456
 9000000876
-8700006848";
-
-        let out = grid
-            .rows_iter()
-            .map(|row| row.iter().map(|o| o.energy.to_string()).join(""))
-            .join("\n");
-
-        assert_eq!(out, state);
-
-        step(&mut grid);
-        let state = "0050900866
+8700006848",
+            "0050900866
 8500800575
 9900000039
 9700000041
@@ -156,13 +125,17 @@ mod test {
 7911250009
 2211130000
 0421125000
-0021119000";
+0021119000",
+        ];
 
-        let out = grid
-            .rows_iter()
-            .map(|row| row.iter().map(|o| o.energy.to_string()).join(""))
-            .join("\n");
+        let mut grid = Day11::parse(Day11::CONTENT);
 
-        assert_eq!(out, state);
+        expected.into_iter().map(Day11::parse).for_each(|expected| {
+            step(&mut grid);
+            assert_eq!(
+                grid.rows_iter().flatten().collect_vec(),
+                expected.rows_iter().flatten().collect_vec()
+            );
+        });
     }
 }
