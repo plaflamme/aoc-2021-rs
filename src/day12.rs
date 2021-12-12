@@ -42,117 +42,55 @@ impl Cave {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Path(Cave, Cave);
+pub struct Edge(Cave, Cave);
 
 type Edges = HashMap<Cave, Vec<Cave>>;
+type Path = Vec<Cave>;
 
-fn step_dfs(path: Vec<Cave>, smalls: &HashSet<Cave>, edges: &Edges) -> Vec<Vec<Cave>> {
-    if let Some(Cave::End) = path.last() {
-        vec![path]
-    } else {
-        if let Some(next) = edges.get(path.last().unwrap()) {
-            let mut more = Vec::new();
-            for n in next {
-                if smalls.contains(n) || *n == Cave::Start {
-                    continue;
-                }
-                let mut path = path.clone();
-                path.push(n.clone());
-                let stepped = if let Cave::Small(_) = n {
-                    let mut smalls = smalls.clone();
-                    smalls.insert(n.clone());
+fn dfs(path: Path, visited: &HashSet<Cave>, has_revisited: bool, edges: &Edges) -> Vec<Path> {
+    match path.last() {
+        Some(Cave::End) => vec![path],
+        Some(c @ Cave::Small(_)) if visited.contains(c) && has_revisited => vec![],
+        Some(c) => {
+            let mut visited = visited.clone();
+            let has_revisited = if let Cave::Small(_) = c {
+                // we've revisited if we visit this cave for the second time or if we've already revisited
+                !visited.insert(c.clone()) || has_revisited
+            } else {
+                has_revisited
+            };
 
-                    step_dfs(path, &smalls, edges)
-                } else {
-                    step_dfs(path, smalls, edges)
-                };
-
-                more.extend(stepped);
-            }
-            more
-        } else {
-            vec![]
+            edges
+                .get(c)
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .flat_map(|next| {
+                    let mut path = path.clone();
+                    path.push(next);
+                    dfs(path, &visited, has_revisited, edges)
+                })
+                .collect_vec()
         }
+        None => panic!("path should have at least one node"),
     }
 }
 
-fn step_dfs_2(
-    path: Vec<Cave>,
-    smalls: &HashSet<Cave>,
-    special_small: &Option<Cave>,
-    edges: &Edges,
-) -> Vec<Vec<Cave>> {
-    if let Some(Cave::End) = path.last() {
-        vec![path]
-    } else {
-        if let Some(next) = edges.get(path.last().unwrap()) {
-            let mut more = Vec::new();
-            for n in next {
-                if *n == Cave::Start {
-                    continue;
-                }
-
-                if smalls.contains(n) && special_small.is_some() {
-                    continue;
-                }
-
-                let mut path = path.clone();
-                path.push(n.clone());
-                let stepped = if let Cave::Small(_) = n {
-                    let mut smalls = smalls.clone();
-                    let special = if smalls.insert(n.clone()) {
-                        special_small.clone()
-                    } else {
-                        if special_small.is_none() {
-                            Some(n.clone())
-                        } else {
-                            special_small.clone()
-                        }
-                    };
-
-                    step_dfs_2(path, &smalls, &special, edges)
-                } else {
-                    step_dfs_2(path, smalls, special_small, edges)
-                };
-
-                more.extend(stepped);
-            }
-            more
-        } else {
-            vec![]
-        }
-    }
-}
-
-fn solve(paths: Vec<Path>) -> Vec<Vec<Cave>> {
+fn solve(paths: Vec<Edge>, allow_revisits: bool) -> Vec<Path> {
     let mut edges: HashMap<Cave, Vec<Cave>> = HashMap::new();
 
     paths.into_iter().for_each(|p| {
         let (from, to) = (p.0, p.1);
-        edges.entry(from.clone()).or_default().push(to.clone());
-        edges.entry(to).or_default().push(from);
+        if to != Cave::Start {
+            edges.entry(from.clone()).or_default().push(to.clone());
+        }
+        if from != Cave::Start {
+            edges.entry(to).or_default().push(from);
+        }
     });
 
     let start = vec![Cave::Start];
-    let result = step_dfs(start, &HashSet::new(), &edges);
-
-    for solution in result.clone() {
-        log::debug!("dfs_me: {:?}", solution);
-    }
-    result
-}
-
-fn solve2(paths: Vec<Path>) -> Vec<Vec<Cave>> {
-    let mut edges: HashMap<Cave, Vec<Cave>> = HashMap::new();
-
-    paths.into_iter().for_each(|p| {
-        let (from, to) = (p.0, p.1);
-        edges.entry(from.clone()).or_default().push(to.clone());
-        edges.entry(to).or_default().push(from);
-    });
-
-    let start = vec![Cave::Start];
-    let result = step_dfs_2(start, &HashSet::new(), &None, &edges);
+    let result = dfs(start, &HashSet::new(), !allow_revisits, &edges);
 
     for solution in result.clone() {
         log::debug!("dfs_me: {:?}", solution);
@@ -163,7 +101,7 @@ fn solve2(paths: Vec<Path>) -> Vec<Vec<Cave>> {
 impl Solver for Day12 {
     type Output = usize;
 
-    type Input = Vec<Path>;
+    type Input = Vec<Edge>;
 
     fn parse(input: &str) -> Self::Input {
         input
@@ -173,16 +111,16 @@ impl Solver for Day12 {
                 let (a, b) = path
                     .split_once("-")
                     .unwrap_or_else(|| panic!("unexpected line {}", path));
-                Path(Cave::from_str(a), Cave::from_str(b))
+                Edge(Cave::from_str(a), Cave::from_str(b))
             })
             .collect()
     }
 
     fn part1(input: Self::Input) -> Self::Output {
-        solve(input.clone()).len()
+        solve(input.clone(), false).len()
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        solve2(input.clone()).len()
+        solve(input.clone(), true).len()
     }
 }
