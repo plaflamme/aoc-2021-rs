@@ -95,11 +95,9 @@ impl Solver for Day13 {
         let dots = dots
             .into_iter()
             .filter(|l| !l.is_empty())
-            .map(|l| {
-                let (x, y) = l.split_once(",").unwrap();
-                crate::grid::Pt(x.parse::<u32>().unwrap(), y.parse::<u32>().unwrap())
-            })
+            .map(|l| l.parse::<Pt>().unwrap())
             .collect();
+
         let folds = folds
             .into_iter()
             .filter(|l| !l.is_empty())

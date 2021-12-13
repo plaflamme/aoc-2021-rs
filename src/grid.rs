@@ -1,6 +1,7 @@
 use std::{
     iter::once,
     ops::{Index, IndexMut},
+    str::FromStr,
 };
 
 use itertools::{Either, FoldWhile, Itertools};
@@ -240,6 +241,22 @@ where
             .to_usize()
             .unwrap_or_else(|| panic!("invalid X coordinate {:?}", self.x));
         (x, y)
+    }
+}
+
+impl<N> FromStr for Pt<N>
+where
+    N: FromStr,
+    <N as FromStr>::Err: std::error::Error + 'static,
+{
+    type Err = Box<dyn std::error::Error>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (x, y) = s
+            .split_once(",")
+            .ok_or_else(|| anyhow::anyhow!("not a Pt: {}", s))?;
+
+        Ok(Pt(x.trim().parse::<N>()?, y.trim().parse::<N>()?))
     }
 }
 
@@ -488,6 +505,15 @@ mod test {
         assert_eq!(Pt(-1, -1).manhattan_signed(&Pt(1, 1)), 4);
         assert_eq!(Pt::<u32>(0, 0).manhattan_unsigned(&Pt(2, 2)), 4);
         assert_eq!(Pt::<u32>(2, 2).manhattan_unsigned(&Pt(0, 0)), 4);
+    }
+
+    #[test]
+    fn test_from_str() -> Result<(), Box<dyn std::error::Error>> {
+        assert_eq!("1,1".parse::<Pt<u8>>()?, Pt(1, 1));
+        assert_eq!("01,1".parse::<Pt<u8>>()?, Pt(1, 1));
+        assert_eq!(" 1,10".parse::<Pt<u8>>()?, Pt(1, 10));
+        assert_eq!("1, 0".parse::<Pt<u8>>()?, Pt(1, 0));
+        Ok(())
     }
 
     #[test]
