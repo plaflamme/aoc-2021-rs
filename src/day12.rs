@@ -6,17 +6,26 @@ use crate::{Day12, Solver};
 
 sample!(
     Day12,
-    "dc-end
-HN-start
-start-kj
-dc-start
-dc-HN
-LN-dc
-HN-end
-kj-sa
-kj-HN
-kj-dc",
-    "19"
+    "fs-end
+he-DX
+fs-he
+start-DX
+pj-DX
+end-zg
+zg-sl
+zg-pj
+pj-he
+RW-he
+fs-DX
+pj-RW
+zg-RW
+start-pj
+he-WI
+zg-he
+pj-fs
+start-RW",
+    "226",
+    "3509"
 );
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -52,6 +61,7 @@ fn dfs(path: Path, visited: &HashSet<Cave>, has_revisited: bool, edges: &Edges) 
         Some(Cave::End) => vec![path],
         Some(c @ Cave::Small(_)) if visited.contains(c) && has_revisited => vec![],
         Some(c) => {
+            // NOTE: not sure how to avoid the clone here since we only need to do it in one of the branches
             let mut visited = visited.clone();
             let has_revisited = if let Cave::Small(_) = c {
                 // we've revisited if we visit this cave for the second time or if we've already revisited
@@ -77,7 +87,7 @@ fn dfs(path: Path, visited: &HashSet<Cave>, has_revisited: bool, edges: &Edges) 
 }
 
 fn solve(paths: Vec<Edge>, allow_revisits: bool) -> Vec<Path> {
-    let mut edges: HashMap<Cave, Vec<Cave>> = HashMap::new();
+    let mut edges: HashMap<Cave, Path> = HashMap::new();
 
     paths.into_iter().for_each(|p| {
         let (from, to) = (p.0, p.1);
@@ -89,13 +99,7 @@ fn solve(paths: Vec<Edge>, allow_revisits: bool) -> Vec<Path> {
         }
     });
 
-    let start = vec![Cave::Start];
-    let result = dfs(start, &HashSet::new(), !allow_revisits, &edges);
-
-    for solution in result.clone() {
-        log::debug!("dfs_me: {:?}", solution);
-    }
-    result
+    dfs(vec![Cave::Start], &HashSet::new(), !allow_revisits, &edges)
 }
 
 impl Solver for Day12 {
@@ -117,10 +121,10 @@ impl Solver for Day12 {
     }
 
     fn part1(input: Self::Input) -> Self::Output {
-        solve(input.clone(), false).len()
+        solve(input, false).len()
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        solve(input.clone(), true).len()
+        solve(input, true).len()
     }
 }
