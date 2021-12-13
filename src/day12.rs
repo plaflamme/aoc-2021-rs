@@ -57,10 +57,10 @@ type Edges = HashMap<Cave, Vec<Cave>>;
 // The problem does not require keeping the order of the nodes
 type Path = HashSet<Cave>;
 
-fn dfs(path: &Path, candidate: Cave, has_revisited: bool, edges: &Edges) -> Vec<Path> {
+fn dfs(path: &Path, candidate: Cave, has_revisited: bool, edges: &Edges) -> usize {
     match candidate {
-        Cave::End => vec![path.clone()],
-        Cave::Small(_) if path.contains(&candidate) && has_revisited => vec![],
+        Cave::End => 1,
+        Cave::Small(_) if path.contains(&candidate) && has_revisited => 0,
         _ => {
             // NOTE: not sure how to avoid the clone here since we only need to do it in one of the branches
             let mut path = path.clone();
@@ -76,13 +76,13 @@ fn dfs(path: &Path, candidate: Cave, has_revisited: bool, edges: &Edges) -> Vec<
                 .cloned()
                 .unwrap_or_default()
                 .into_iter()
-                .flat_map(|next| dfs(&path, next, has_revisited, edges))
-                .collect_vec()
+                .map(|next| dfs(&path, next, has_revisited, edges))
+                .sum::<usize>()
         }
     }
 }
 
-fn solve(paths: Vec<Edge>, allow_revisits: bool) -> Vec<Path> {
+fn solve(paths: Vec<Edge>, allow_revisits: bool) -> usize {
     let mut edges: HashMap<Cave, Vec<Cave>> = HashMap::new();
 
     paths.into_iter().for_each(|p| {
@@ -117,10 +117,10 @@ impl Solver for Day12 {
     }
 
     fn part1(input: Self::Input) -> Self::Output {
-        solve(input, false).len()
+        solve(input, false)
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        solve(input, true).len()
+        solve(input, true)
     }
 }
