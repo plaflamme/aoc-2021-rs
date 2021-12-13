@@ -54,40 +54,36 @@ impl Cave {
 pub struct Edge(Cave, Cave);
 
 type Edges = HashMap<Cave, Vec<Cave>>;
-type Path = Vec<Cave>;
+// The problem does not require keeping the order of the nodes
+type Path = HashSet<Cave>;
 
-fn dfs(path: Path, visited: &HashSet<Cave>, has_revisited: bool, edges: &Edges) -> Vec<Path> {
-    match path.last() {
-        Some(Cave::End) => vec![path],
-        Some(c @ Cave::Small(_)) if visited.contains(c) && has_revisited => vec![],
-        Some(c) => {
+fn dfs(path: &Path, candidate: Cave, has_revisited: bool, edges: &Edges) -> Vec<Path> {
+    match candidate {
+        Cave::End => vec![path.clone()],
+        Cave::Small(_) if path.contains(&candidate) && has_revisited => vec![],
+        _ => {
             // NOTE: not sure how to avoid the clone here since we only need to do it in one of the branches
-            let mut visited = visited.clone();
-            let has_revisited = if let Cave::Small(_) = c {
-                // we've revisited if we visit this cave for the second time or if we've already revisited
-                !visited.insert(c.clone()) || has_revisited
+            let mut path = path.clone();
+            let new_visit = path.insert(candidate.clone());
+            let has_revisited = if let Cave::Small(_) = candidate {
+                !new_visit || has_revisited
             } else {
                 has_revisited
             };
 
             edges
-                .get(c)
+                .get(&candidate)
                 .cloned()
                 .unwrap_or_default()
                 .into_iter()
-                .flat_map(|next| {
-                    let mut path = path.clone();
-                    path.push(next);
-                    dfs(path, &visited, has_revisited, edges)
-                })
+                .flat_map(|next| dfs(&path, next, has_revisited, edges))
                 .collect_vec()
         }
-        None => panic!("path should have at least one node"),
     }
 }
 
 fn solve(paths: Vec<Edge>, allow_revisits: bool) -> Vec<Path> {
-    let mut edges: HashMap<Cave, Path> = HashMap::new();
+    let mut edges: HashMap<Cave, Vec<Cave>> = HashMap::new();
 
     paths.into_iter().for_each(|p| {
         let (from, to) = (p.0, p.1);
@@ -99,7 +95,7 @@ fn solve(paths: Vec<Edge>, allow_revisits: bool) -> Vec<Path> {
         }
     });
 
-    dfs(vec![Cave::Start], &HashSet::new(), !allow_revisits, &edges)
+    dfs(&HashSet::new(), Cave::Start, !allow_revisits, &edges)
 }
 
 impl Solver for Day12 {
