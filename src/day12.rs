@@ -1,7 +1,5 @@
 use std::collections::{HashMap, HashSet};
 
-use itertools::Itertools;
-
 use crate::{Day12, Solver};
 
 sample!(
