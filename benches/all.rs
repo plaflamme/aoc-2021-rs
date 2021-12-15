@@ -52,5 +52,7 @@ criterion_group!(
     bench_main::<Day11>,
     bench_main::<Day12>,
     bench_main::<Day13>,
+    bench_main::<Day14>,
+    bench_main::<Day15>,
 );
 criterion_main!(benches);

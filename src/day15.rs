@@ -1,6 +1,7 @@
 use itertools::Itertools;
+use num::integer::div_rem;
 
-use crate::{Day15, Solver};
+use crate::{grid::Pt, Day15, Solver};
 
 sample!(
     Day15,
@@ -19,20 +20,19 @@ sample!(
 );
 
 type Cavern = crate::grid::Grid<u8>;
-type Pt = crate::grid::Pt<u32>;
 
 fn lowest_cost(cavern: Cavern) -> usize {
-    let end = cavern.pts().sorted().last().unwrap();
     let w = cavern.width() as u32;
     let h = cavern.height() as u32;
+    let end = Pt(w - 1, h - 1);
     let path = pathfinding::directed::astar::astar(
-        &crate::grid::Pt(0_u32, 0),
+        &Pt(0_u32, 0),
         |pt| {
             pt.neighbours_checked(w, h)
                 .map(|pt| (pt, cavern[pt] as usize))
                 .collect_vec()
         },
-        |_| 0,
+        |pt| pt.manhattan_unsigned(&end) as usize, // this must be <= actual cost so distance works
         |pt| *pt == end,
     );
     path.unwrap().1
@@ -45,12 +45,10 @@ fn extend(cavern: Cavern) -> Cavern {
     let mut extended = Cavern::from_iter(width * 5, vec![0; width * height * 25].into_iter());
 
     extended.pts::<u32>().for_each(|pt| {
-        let orig_x = pt.x % width as u32;
-        let orig_y = pt.y % height as u32;
-
-        let inc_x = pt.x / width as u32;
-        let inc_y = pt.y / height as u32;
-        let orig_value = cavern[crate::grid::Pt(orig_x, orig_y)] as u32;
+        // div_rem returns both the quotient and remainder in a single operation
+        let (inc_x, orig_x) = div_rem(pt.x, width as u32);
+        let (inc_y, orig_y) = div_rem(pt.y, height as u32);
+        let orig_value = cavern[Pt(orig_x, orig_y)] as u32;
         let mut new_value = orig_value + inc_x + inc_y;
         if new_value > 9 {
             new_value -= 9
