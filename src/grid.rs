@@ -178,7 +178,7 @@ impl<N: Integer + Copy> Pt<N> {
             once(up_down.to(Dir::Left)).chain(once(up_down.to(Dir::Right)))
         })
     }
-    pub fn neighbours_checked(&self, w: N, h: N) -> impl Iterator<Item = Self> + '_ {
+    pub fn neighbours_checked<'a>(&'a self, w: N, h: N) -> impl Iterator<Item = Self> + 'a {
         Dir::all().flat_map(move |d| self.to_checked(d, w, h))
     }
     pub fn diagonals_checked(&self, w: N, h: N) -> impl Iterator<Item = Self> + '_ {
