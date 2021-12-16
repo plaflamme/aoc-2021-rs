@@ -54,7 +54,7 @@ impl Template {
     fn step(&mut self, rules: &HashMap<[Element; 2], Element>) {
         let mut new_frequencies = self.frequencies.clone();
 
-        rules.into_iter().for_each(|rule| {
+        rules.iter().for_each(|rule| {
             let pair = rule.0;
             let insert = rule.1;
             if let Some(freq) = self.frequencies.get(pair) {

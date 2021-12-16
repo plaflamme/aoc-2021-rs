@@ -67,7 +67,7 @@ fn print(dots: &HashSet<Pt>) -> Result<String, Box<dyn std::error::Error>> {
     let max_y = dots.iter().map(|pt| pt.y).max().unwrap();
 
     let mut out = String::new();
-    writeln!(&mut out, "")?;
+    writeln!(&mut out)?;
     for y in 0..=max_y {
         for x in 0..=max_x {
             if dots.contains(&crate::grid::Pt(x, y)) {
@@ -76,7 +76,7 @@ fn print(dots: &HashSet<Pt>) -> Result<String, Box<dyn std::error::Error>> {
                 write!(&mut out, " ")?;
             }
         }
-        writeln!(&mut out, "")?;
+        writeln!(&mut out)?;
     }
     Ok(out)
 }
@@ -119,10 +119,7 @@ impl Solver for Day13 {
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        let dots = input
-            .1
-            .into_iter()
-            .fold(input.0, |dots, fold| fold_paper(dots, fold));
+        let dots = input.1.into_iter().fold(input.0, fold_paper);
 
         print(&dots).unwrap()
     }

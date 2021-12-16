@@ -58,7 +58,7 @@ type Path = HashSet<Cave>;
 fn dfs(path: &Path, candidate: &Cave, has_revisited: bool, edges: &Edges) -> usize {
     match candidate {
         Cave::End => 1,
-        Cave::Small(_) if path.contains(&candidate) && has_revisited => 0,
+        Cave::Small(_) if path.contains(candidate) && has_revisited => 0,
         _ => {
             let mut path = path.clone();
             let new_visit = path.insert(candidate.clone());
@@ -69,9 +69,9 @@ fn dfs(path: &Path, candidate: &Cave, has_revisited: bool, edges: &Edges) -> usi
             };
 
             edges
-                .get(&candidate)
+                .get(candidate)
                 .unwrap_or(&vec![])
-                .into_iter()
+                .iter()
                 .map(|next| dfs(&path, next, has_revisited, edges))
                 .sum::<usize>()
         }
