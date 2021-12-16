@@ -8,9 +8,35 @@ type Slice = BitSlice<Msb0, u8>;
 sample!(Day16, "A0016C880162017C3686B18A3D4780", "31");
 
 #[derive(Debug, Clone, Eq, PartialEq)]
+enum Op {
+    Sum,
+    Product,
+    Min,
+    Max,
+    Gt,
+    Lt,
+    Equal,
+}
+
+impl From<u8> for Op {
+    fn from(v: u8) -> Self {
+        match v {
+            0 => Op::Sum,
+            1 => Op::Product,
+            2 => Op::Min,
+            3 => Op::Max,
+            5 => Op::Gt,
+            6 => Op::Lt,
+            7 => Op::Equal,
+            _ => panic!("invalid op {}", v),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
 enum Token {
     Literal(usize),
-    Op(u8, Vec<Packet>),
+    Op(Op, Vec<Packet>),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -52,7 +78,7 @@ fn parse_op(op: u8, bits: &Slice) -> (Token, &Slice) {
             packets.push(p);
             bits
         });
-        (Token::Op(op, packets), remain)
+        (Token::Op(Op::from(op), packets), remain)
     } else {
         // 15 bits
         let (n, bits) = rest.split_at(15);
@@ -64,13 +90,12 @@ fn parse_op(op: u8, bits: &Slice) -> (Token, &Slice) {
             inner = remain;
             packets.push(packet);
         }
-        (Token::Op(op, packets), bits)
+        (Token::Op(Op::from(op), packets), bits)
     }
 }
 
 impl Packet {
     fn parse(bits: &Slice) -> (Self, &Slice) {
-        log::debug!("parse packet: {:?}", bits);
         let (v, rest) = bits.split_at(3);
         let (tag, rest) = rest.split_at(3);
 
@@ -87,6 +112,35 @@ impl Packet {
             Token::Op(_, packets) => packets.into_iter().map(|p| p.sum_versions()).sum::<usize>(),
         };
         self.0 as usize + inner_sum
+    }
+
+    fn compute(self) -> usize {
+        match self.1 {
+            Token::Literal(v) => v,
+            Token::Op(op, packets) => {
+                let mut packets = packets.into_iter().map(|p| p.compute());
+                match op {
+                    Op::Sum => packets.sum(),
+                    Op::Product => packets.product(),
+                    Op::Min => packets.min().unwrap(),
+                    Op::Max => packets.max().unwrap(),
+                    _ => {
+                        let (left, right) = packets.next_tuple().unwrap();
+                        let result = match op {
+                            Op::Lt => left < right,
+                            Op::Gt => left > right,
+                            Op::Equal => left == right,
+                            _ => unreachable!(),
+                        };
+                        if result {
+                            1
+                        } else {
+                            0
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -113,7 +167,7 @@ impl Solver for Day16 {
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        todo!()
+        Packet::parse(&input).0.compute()
     }
 }
 
@@ -136,7 +190,7 @@ mod test {
             Packet(
                 1,
                 Token::Op(
-                    6,
+                    Op::from(6),
                     vec![Packet(6, Token::Literal(10)), Packet(2, Token::Literal(20))]
                 )
             )
@@ -148,7 +202,7 @@ mod test {
             Packet(
                 7,
                 Token::Op(
-                    3,
+                    Op::from(3),
                     vec![
                         Packet(2, Token::Literal(1)),
                         Packet(4, Token::Literal(2)),
