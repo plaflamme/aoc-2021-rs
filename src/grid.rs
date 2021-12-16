@@ -288,10 +288,10 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn from_iter(w: usize, it: impl Iterator<Item = T>) -> Self {
+    pub fn from_iter(w: usize, it: impl IntoIterator<Item = T>) -> Self {
         Self {
             w,
-            values: it.collect_vec(),
+            values: it.into_iter().collect_vec(),
         }
     }
 
