@@ -29,76 +29,70 @@ CN -> C",
 );
 
 type Element = char;
+type Pair = [Element; 2];
 
-pub struct Rule([Element; 2], Element);
+pub struct Rule(Pair, [Pair; 2]);
 
 #[derive(Debug)]
 struct Template {
-    frequencies: HashMap<[Element; 2], usize>,
-    first_last: [Element; 2],
+    frequencies: HashMap<Pair, usize>,
+    last: Element,
 }
 
 impl Template {
     fn new(els: Vec<Element>) -> Self {
-        let first_last = [*els.first().unwrap(), *els.last().unwrap()];
+        let last = *els.last().unwrap();
         Template {
             frequencies: els
                 .into_iter()
                 .tuple_windows()
                 .map(|(first, second)| [first, second])
                 .counts_by(identity),
-            first_last,
+            last,
         }
     }
 
-    fn step(&mut self, rules: &HashMap<[Element; 2], Element>) {
+    fn step(&mut self, rules: &HashMap<Pair, [Pair; 2]>) {
         let mut new_frequencies = self.frequencies.clone();
 
-        rules.iter().for_each(|rule| {
-            let pair = rule.0;
-            let insert = rule.1;
+        rules.iter().for_each(|(pair, [a, b])| {
             if let Some(freq) = self.frequencies.get(pair) {
-                let current = new_frequencies.get_mut(rule.0).unwrap();
-                if *current == *freq {
-                    new_frequencies.remove(pair);
-                } else {
-                    *current -= freq;
-                }
-
-                *new_frequencies.entry([pair[0], *insert]).or_insert(0) += freq;
-                *new_frequencies.entry([*insert, pair[1]]).or_insert(0) += freq;
+                new_frequencies.entry(*pair).and_modify(|f| *f -= freq);
+                new_frequencies
+                    .entry(*a)
+                    .and_modify(|f| *f += freq)
+                    .or_insert(*freq);
+                new_frequencies
+                    .entry(*b)
+                    .and_modify(|f| *f += freq)
+                    .or_insert(*freq);
             }
         });
         self.frequencies = new_frequencies;
     }
 
     fn solve(&self) -> usize {
-        let mut el_freqs = HashMap::new();
-        self.frequencies
+        let mut el_freqs = self
+            .frequencies
             .iter()
-            .filter(|(_, f)| **f > 0)
-            .flat_map(|(pair, freq)| vec![(pair[0], freq), (pair[1], freq)])
-            .for_each(|(el, freq)| *el_freqs.entry(el).or_insert(0_usize) += freq);
+            .map(|([el, _], freq)| (el, *freq))
+            .into_grouping_map()
+            .sum();
 
-        el_freqs.iter_mut().for_each(|(el, freq)| {
-            if self.first_last.contains(el) {
-                *freq += 1;
-            }
-            *freq /= 2;
-        });
+        el_freqs.entry(&self.last).and_modify(|f| *f += 1);
 
-        log::debug!("{:?}", el_freqs);
-
-        let el_freqs = el_freqs.values().cloned().sorted().collect_vec();
-
-        el_freqs.last().unwrap() - el_freqs.first().unwrap()
+        if let itertools::MinMaxResult::MinMax(min, max) = el_freqs.values().minmax() {
+            *max - *min
+        } else {
+            unreachable!("oops");
+        }
     }
 }
 
 impl Solver for Day14 {
     type Output = usize;
 
-    type Input = (Vec<Element>, HashMap<[Element; 2], Element>);
+    type Input = (Vec<Element>, HashMap<Pair, [Pair; 2]>);
 
     fn parse(input: &str) -> Self::Input {
         let (template, rules) = crate::tools::empty_line_delimited_batches(input.lines())
@@ -123,7 +117,7 @@ impl Solver for Day14 {
                 let (a, b) = tpl.chars().tuples().exactly_one().ok().unwrap();
                 let c = el.chars().exactly_one().ok().unwrap();
 
-                ([a, b], c)
+                ([a, b], [[a, c], [c, b]])
             })
             .collect();
 
