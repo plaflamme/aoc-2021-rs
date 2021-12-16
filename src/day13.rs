@@ -70,7 +70,7 @@ fn print(dots: &HashSet<Pt>) -> Result<String, Box<dyn std::error::Error>> {
     writeln!(&mut out)?;
     for y in 0..=max_y {
         for x in 0..=max_x {
-            if dots.contains(&crate::grid::Pt(x, y)) {
+            if dots.contains(&Pt::new(x, y)) {
                 write!(&mut out, "#")?;
             } else {
                 write!(&mut out, " ")?;

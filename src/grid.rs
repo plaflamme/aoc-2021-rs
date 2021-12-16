@@ -76,23 +76,21 @@ pub struct Pt<N = i32> {
     pub x: N,
 }
 
-#[allow(non_snake_case)]
-pub const fn Pt<N>(x: N, y: N) -> Pt<N> {
-    Pt { x, y }
-}
-
 impl<N: Integer + Copy> Pt<N> {
+    pub const fn new(x: N, y: N) -> Self {
+        Self { x, y }
+    }
     pub fn up(self) -> Self {
-        Pt(self.x, self.y - N::one())
+        Pt::new(self.x, self.y - N::one())
     }
     pub fn down(self) -> Self {
-        Pt(self.x, self.y + N::one())
+        Pt::new(self.x, self.y + N::one())
     }
     pub fn left(self) -> Self {
-        Pt(self.x - N::one(), self.y)
+        Pt::new(self.x - N::one(), self.y)
     }
     pub fn right(self) -> Self {
-        Pt(self.x + N::one(), self.y)
+        Pt::new(self.x + N::one(), self.y)
     }
     pub fn to(self, d: Dir) -> Self {
         match d {
@@ -246,7 +244,7 @@ where
 
 impl<N> FromStr for Pt<N>
 where
-    N: FromStr,
+    N: Integer + FromStr + Copy,
     <N as FromStr>::Err: std::error::Error + 'static,
 {
     type Err = Box<dyn std::error::Error>;
@@ -256,7 +254,7 @@ where
             .split_once(",")
             .ok_or_else(|| anyhow::anyhow!("not a Pt: {}", s))?;
 
-        Ok(Pt(x.trim().parse::<N>()?, y.trim().parse::<N>()?))
+        Ok(Pt::new(x.trim().parse::<N>()?, y.trim().parse::<N>()?))
     }
 }
 
@@ -313,7 +311,7 @@ impl<T> Grid<T> {
             .map(|(y, x)| {
                 let x = N::from_usize(x).expect("invalid width");
                 let y = N::from_usize(y).expect("invalid height");
-                Pt(x, y)
+                Pt::new(x, y)
             })
     }
 
@@ -408,111 +406,121 @@ mod test {
 
     #[test]
     fn test_pt_to() {
-        let start = Pt(0, 0);
-        assert_eq!(start.up(), Pt(0, -1));
+        let start = Pt::new(0, 0);
+        assert_eq!(start.up(), Pt::new(0, -1));
         assert_eq!(start.up(), start.to(Dir::Up));
 
-        assert_eq!(start.right(), Pt(1, 0));
+        assert_eq!(start.right(), Pt::new(1, 0));
         assert_eq!(start.right(), start.to(Dir::Right));
 
-        assert_eq!(start.down(), Pt(0, 1));
+        assert_eq!(start.down(), Pt::new(0, 1));
         assert_eq!(start.down(), start.to(Dir::Down));
 
-        assert_eq!(start.left(), Pt(-1, 0));
+        assert_eq!(start.left(), Pt::new(-1, 0));
         assert_eq!(start.left(), start.to(Dir::Left));
     }
     #[test]
     fn test_pt_to_checked() {
-        assert_eq!(Pt(0, 0).to_checked(Dir::Up, 2, 2), None);
-        assert_eq!(Pt(0, 1).to_checked(Dir::Up, 2, 2), Some(Pt(0, 0)));
+        assert_eq!(Pt::new(0, 0).to_checked(Dir::Up, 2, 2), None);
+        assert_eq!(Pt::new(0, 1).to_checked(Dir::Up, 2, 2), Some(Pt::new(0, 0)));
 
-        assert_eq!(Pt(1, 0).to_checked(Dir::Right, 2, 2), None);
-        assert_eq!(Pt(0, 0).to_checked(Dir::Right, 2, 2), Some(Pt(1, 0)));
+        assert_eq!(Pt::new(1, 0).to_checked(Dir::Right, 2, 2), None);
+        assert_eq!(
+            Pt::new(0, 0).to_checked(Dir::Right, 2, 2),
+            Some(Pt::new(1, 0))
+        );
 
-        assert_eq!(Pt(0, 1).to_checked(Dir::Down, 2, 2), None);
-        assert_eq!(Pt(0, 0).to_checked(Dir::Down, 2, 2), Some(Pt(0, 1)));
+        assert_eq!(Pt::new(0, 1).to_checked(Dir::Down, 2, 2), None);
+        assert_eq!(
+            Pt::new(0, 0).to_checked(Dir::Down, 2, 2),
+            Some(Pt::new(0, 1))
+        );
 
-        assert_eq!(Pt(0, 0).to_checked(Dir::Left, 2, 2), None);
-        assert_eq!(Pt(1, 0).to_checked(Dir::Left, 2, 2), Some(Pt(0, 0)));
+        assert_eq!(Pt::new(0, 0).to_checked(Dir::Left, 2, 2), None);
+        assert_eq!(
+            Pt::new(1, 0).to_checked(Dir::Left, 2, 2),
+            Some(Pt::new(0, 0))
+        );
     }
     #[test]
     fn test_pt_go() {
-        let mut start = Pt(0, 0);
+        let mut start = Pt::new(0, 0);
 
         start.go_up();
-        assert_eq!(start, Pt(0, -1));
+        assert_eq!(start, Pt::new(0, -1));
         start.go(Dir::Up);
-        assert_eq!(start, Pt(0, -2));
+        assert_eq!(start, Pt::new(0, -2));
 
-        let mut start = Pt(0, 0);
+        let mut start = Pt::new(0, 0);
         start.go_right();
-        assert_eq!(start, Pt(1, 0));
+        assert_eq!(start, Pt::new(1, 0));
         start.go(Dir::Right);
-        assert_eq!(start, Pt(2, 0));
+        assert_eq!(start, Pt::new(2, 0));
 
-        let mut start = Pt(0, 0);
+        let mut start = Pt::new(0, 0);
         start.go_down();
-        assert_eq!(start, Pt(0, 1));
+        assert_eq!(start, Pt::new(0, 1));
         start.go(Dir::Down);
-        assert_eq!(start, Pt(0, 2));
+        assert_eq!(start, Pt::new(0, 2));
 
-        let mut start = Pt(0, 0);
+        let mut start = Pt::new(0, 0);
         start.go_left();
-        assert_eq!(start, Pt(-1, 0));
+        assert_eq!(start, Pt::new(-1, 0));
         start.go(Dir::Left);
-        assert_eq!(start, Pt(-2, 0));
+        assert_eq!(start, Pt::new(-2, 0));
     }
     #[test]
     fn test_pt_neighbours() {
-        let n = Pt(0, 0).neighbours().collect_vec();
-        assert!(n.contains(&Pt(0, -1)));
-        assert!(n.contains(&Pt(1, 0)));
-        assert!(n.contains(&Pt(0, 1)));
-        assert!(n.contains(&Pt(-1, 0)));
+        let n = Pt::new(0, 0).neighbours().collect_vec();
+        assert!(n.contains(&Pt::new(0, -1)));
+        assert!(n.contains(&Pt::new(1, 0)));
+        assert!(n.contains(&Pt::new(0, 1)));
+        assert!(n.contains(&Pt::new(-1, 0)));
     }
     #[test]
     fn test_pt_neighbours_checked() {
-        let n = Pt(0, 0).neighbours_checked(2, 2).collect_vec();
-        assert!(n.contains(&Pt(1, 0)));
-        assert!(n.contains(&Pt(0, 1)));
-        let n = Pt(0, 0).neighbours_checked(1, 1).collect_vec();
+        let n = Pt::new(0, 0).neighbours_checked(2, 2).collect_vec();
+        assert!(n.contains(&Pt::new(1, 0)));
+        assert!(n.contains(&Pt::new(0, 1)));
+        let n = Pt::new(0, 0).neighbours_checked(1, 1).collect_vec();
         assert!(n.is_empty());
     }
     #[test]
     fn test_pt_diagonals_checked() {
-        let n = Pt(1, 1).diagonals_checked(3, 3).collect_vec();
-        assert!(n.contains(&Pt(0, 0)));
-        assert!(n.contains(&Pt(2, 0)));
-        assert!(n.contains(&Pt(2, 2)));
-        assert!(n.contains(&Pt(0, 2)));
+        let n = Pt::new(1, 1).diagonals_checked(3, 3).collect_vec();
+        assert!(n.contains(&Pt::new(0, 0)));
+        assert!(n.contains(&Pt::new(2, 0)));
+        assert!(n.contains(&Pt::new(2, 2)));
+        assert!(n.contains(&Pt::new(0, 2)));
 
-        let n = Pt(0, 0).diagonals_checked(2, 2).collect_vec();
-        assert!(n.contains(&Pt(1, 1)));
+        let n = Pt::new(0, 0).diagonals_checked(2, 2).collect_vec();
+        assert!(n.contains(&Pt::new(1, 1)));
 
-        let n = Pt(0, 0).diagonals_checked(1, 1).collect_vec();
+        let n = Pt::new(0, 0).diagonals_checked(1, 1).collect_vec();
         assert!(n.is_empty());
     }
     #[test]
     fn test_pt_travel_checked() {
-        let n = Pt(1_u8, 1).travel_checked(vec![Dir::Up, Dir::Down, Dir::Left, Dir::Right], 3, 3);
-        assert_eq!(n, Either::Right(Pt(1, 1)));
-        let n = Pt(1_u8, 1).travel_checked(vec![Dir::Up, Dir::Up], 3, 3);
-        assert_eq!(n, Either::Left(Pt(1, 0)));
+        let n =
+            Pt::new(1_u8, 1).travel_checked(vec![Dir::Up, Dir::Down, Dir::Left, Dir::Right], 3, 3);
+        assert_eq!(n, Either::Right(Pt::new(1, 1)));
+        let n = Pt::new(1_u8, 1).travel_checked(vec![Dir::Up, Dir::Up], 3, 3);
+        assert_eq!(n, Either::Left(Pt::new(1, 0)));
     }
     #[test]
     fn test_pt_manhattan_distance() {
-        assert_eq!(Pt(1, 1).manhattan_signed(&Pt(-1, -1)), 4);
-        assert_eq!(Pt(-1, -1).manhattan_signed(&Pt(1, 1)), 4);
-        assert_eq!(Pt::<u32>(0, 0).manhattan_unsigned(&Pt(2, 2)), 4);
-        assert_eq!(Pt::<u32>(2, 2).manhattan_unsigned(&Pt(0, 0)), 4);
+        assert_eq!(Pt::new(1, 1).manhattan_signed(&Pt::new(-1, -1)), 4);
+        assert_eq!(Pt::new(-1, -1).manhattan_signed(&Pt::new(1, 1)), 4);
+        assert_eq!(Pt::new(0_u32, 0).manhattan_unsigned(&Pt::new(2, 2)), 4);
+        assert_eq!(Pt::new(2_u32, 2).manhattan_unsigned(&Pt::new(0, 0)), 4);
     }
 
     #[test]
     fn test_from_str() -> Result<(), Box<dyn std::error::Error>> {
-        assert_eq!("1,1".parse::<Pt<u8>>()?, Pt(1, 1));
-        assert_eq!("01,1".parse::<Pt<u8>>()?, Pt(1, 1));
-        assert_eq!(" 1,10".parse::<Pt<u8>>()?, Pt(1, 10));
-        assert_eq!("1, 0".parse::<Pt<u8>>()?, Pt(1, 0));
+        assert_eq!("1,1".parse::<Pt<u8>>()?, Pt::new(1, 1));
+        assert_eq!("01,1".parse::<Pt<u8>>()?, Pt::new(1, 1));
+        assert_eq!(" 1,10".parse::<Pt<u8>>()?, Pt::new(1, 10));
+        assert_eq!("1, 0".parse::<Pt<u8>>()?, Pt::new(1, 0));
         Ok(())
     }
 
@@ -544,7 +552,14 @@ mod test {
         let pts = grid.pts().collect_vec();
         assert_eq!(
             pts,
-            vec![Pt(0, 0), Pt(1, 0), Pt(2, 0), Pt(0, 1), Pt(1, 1), Pt(2, 1)]
+            vec![
+                Pt::new(0, 0),
+                Pt::new(1, 0),
+                Pt::new(2, 0),
+                Pt::new(0, 1),
+                Pt::new(1, 1),
+                Pt::new(2, 1)
+            ]
         )
     }
 }

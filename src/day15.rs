@@ -26,9 +26,9 @@ type Pt = crate::grid::Pt<u32>;
 fn pathfinding_astar(cavern: Cavern) -> usize {
     let w = cavern.width() as u32;
     let h = cavern.height() as u32;
-    let end = crate::grid::Pt(w - 1, h - 1);
+    let end = Pt::new(w - 1, h - 1);
     let path = pathfinding::directed::astar::astar(
-        &crate::grid::Pt(0_u32, 0),
+        &Pt::new(0, 0),
         |pt| {
             pt.neighbours_checked(w, h)
                 .map(|pt| (pt, cavern[pt] as usize))
@@ -43,9 +43,9 @@ fn pathfinding_astar(cavern: Cavern) -> usize {
 fn pathfinding_dijkstra(cavern: Cavern) -> usize {
     let w = cavern.width() as u32;
     let h = cavern.height() as u32;
-    let end = crate::grid::Pt(w - 1, h - 1);
+    let end = Pt::new(w - 1, h - 1);
     let path = pathfinding::directed::dijkstra::dijkstra(
-        &crate::grid::Pt(0_u32, 0),
+        &Pt::new(0, 0),
         |pt| {
             pt.neighbours_checked(w, h)
                 .map(|pt| (pt, cavern[pt] as usize))
@@ -102,8 +102,8 @@ fn manual_dijkstra(cavern: Cavern) -> usize {
     let width = cavern.width();
     let height = cavern.height();
     dijkstra(
-        crate::grid::Pt(0_u32, 0),
-        crate::grid::Pt(width as u32 - 1, height as u32 - 1),
+        Pt::new(0, 0),
+        Pt::new(width as u32 - 1, height as u32 - 1),
         (width, height),
         |pt| {
             pt.neighbours_checked(width as u32, height as u32)
@@ -124,7 +124,7 @@ fn extend(cavern: Cavern) -> Cavern {
         // div_rem returns both the quotient and remainder in a single operation
         let (inc_x, orig_x) = div_rem(pt.x, width as u32);
         let (inc_y, orig_y) = div_rem(pt.y, height as u32);
-        let orig_value = cavern[crate::grid::Pt(orig_x, orig_y)] as u32;
+        let orig_value = cavern[Pt::new(orig_x, orig_y)] as u32;
         let mut ext_value = orig_value + inc_x + inc_y;
         if ext_value > 9 {
             ext_value -= 9
