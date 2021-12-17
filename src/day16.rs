@@ -46,15 +46,16 @@ fn parse_varint(bits: &Slice) -> (usize, &Slice) {
     let mut lit = 0_usize;
     let mut rest = bits;
     loop {
+        let (value, remain) = rest.split_at(5);
+        let (first, value) = value.split_first().unwrap();
         lit <<= 4;
-        let (n, remain) = rest.split_at(5);
-        lit |= n.get(1..5).unwrap().load_be::<u8>() as usize;
+        lit |= value.load_be::<u8>() as usize;
         rest = remain;
-
-        if !n.get(0).unwrap() {
-            break (lit, rest);
+        if !first {
+            break;
         }
     }
+    (lit, rest)
 }
 
 fn parse_literal(bits: &Slice) -> (Token, &Slice) {
@@ -178,13 +179,13 @@ mod test {
     #[test]
     fn test_parse_literal() {
         let bits = <Day16 as Solver>::parse("D2FE28");
-        let (packet, rest) = Packet::parse(&bits);
+        let (packet, _) = Packet::parse(&bits);
         assert_eq!(packet, Packet(6, Token::Literal(2021)));
     }
     #[test]
     fn test_parse_op() {
         let bits = <Day16 as Solver>::parse("38006F45291200");
-        let (packet, rest) = Packet::parse(&bits);
+        let (packet, _) = Packet::parse(&bits);
         assert_eq!(
             packet,
             Packet(
@@ -196,7 +197,7 @@ mod test {
             )
         );
         let bits = <Day16 as Solver>::parse("EE00D40C823060");
-        let (packet, rest) = Packet::parse(&bits);
+        let (packet, _) = Packet::parse(&bits);
         assert_eq!(
             packet,
             Packet(
