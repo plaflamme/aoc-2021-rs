@@ -1,5 +1,6 @@
 #![feature(drain_filter)]
 #![feature(const_fn_trait_bound)]
+#![feature(box_patterns)]
 
 use aocf::{Aoc, Level};
 

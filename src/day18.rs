@@ -1,4 +1,6 @@
 use crate::{Day18, Solver};
+use itertools::Itertools;
+use num::Integer;
 
 sample!(Day18, "", "");
 
@@ -24,16 +26,17 @@ impl Number {
 pub struct Fish(Number, Number);
 
 fn parse_number(input: &str) -> (Number, &str) {
-    let mut chars = input.chars();
-    match chars.next().unwrap() {
+    match input.chars().next().unwrap() {
         '[' => {
             let (more, rest) = parse_pair(input);
             (Number::More(Box::new(more)), rest)
         }
-        c @ '0'..='9' => (
-            Number::Single(c.to_string().parse::<u8>().unwrap()),
-            chars.as_str(),
-        ),
+        '0'..='9' => {
+            let n = String::from_iter(input.chars().take_while(|c| ('0'..='9').contains(c)));
+            let (_, rest) = input.split_at(n.len());
+            (Number::Single(n.parse::<u8>().unwrap()), rest)
+        }
+
         invalid => panic!("unexpected {}", invalid),
     }
 }
@@ -135,6 +138,33 @@ fn explode(f: Fish) -> Option<Fish> {
     }
 }
 
+fn split_n(n: Number) -> Option<Number> {
+    match n {
+        Number::Single(v) if v >= 10 => Some(Number::More(Box::new(Fish(
+            Number::single(v.div_floor(&2)),
+            Number::single(v.div_ceil(&2)),
+        )))),
+        Number::More(box Fish(left, right)) => {
+            if let Some(n) = split_n(left.clone()) {
+                Some(Number::More(Box::new(Fish(n, right))))
+            } else if let Some(n) = split_n(right.clone()) {
+                Some(Number::More(Box::new(Fish(left, n))))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn split(f: Fish) -> Option<Fish> {
+    if let Some(Number::More(box f)) = split_n(Number::More(Box::new(f))) {
+        Some(f)
+    } else {
+        None
+    }
+}
+
 impl Solver for Day18 {
     type Output = usize;
 
@@ -199,5 +229,18 @@ mod test {
 
         let fish = parse("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]");
         assert_eq!(explode(fish), Some(parse("[[3,[2,[8,0]]],[9,[5,[7,0]]]]")));
+    }
+
+    #[test]
+    fn test_split() {
+        let fish = parse("[[[[0,7],4],[15,[0,13]]],[1,1]]");
+        assert_eq!(
+            split(fish.clone()),
+            Some(parse("[[[[0,7],4],[[7,8],[0,13]]],[1,1]]"))
+        );
+        assert_eq!(
+            split(split(fish).unwrap()),
+            Some(parse("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]"))
+        );
     }
 }
