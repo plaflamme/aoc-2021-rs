@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::{Day18, Solver};
 use itertools::Itertools;
 use num::Integer;
-use text_trees::{StringTreeNode, TreeNode};
+use text_trees::StringTreeNode;
 
 sample!(
     Day18,
@@ -22,156 +22,135 @@ sample!(
 );
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-enum Number {
-    Single(u8),
-    More(Box<Fish>),
+pub enum Node {
+    Leaf(u8),
+    Branch(Box<Node>, Box<Node>),
 }
 
-impl Number {
-    fn single(n: u8) -> Self {
-        Number::Single(n)
+impl Node {
+    fn branch(left: Node, right: Node) -> Self {
+        Node::Branch(Box::new(left), Box::new(right))
     }
-    fn more(o: Option<Fish>) -> Self {
-        match o {
-            Some(f) => Number::More(Box::new(f)),
-            None => Number::Single(0),
+}
+
+impl Node {
+    fn add_left(&mut self, add: u8) {
+        match self {
+            Node::Leaf(a) => *a += add,
+            Node::Branch(box left, _) => left.add_left(add),
+        }
+    }
+    fn add_right(&mut self, add: u8) {
+        match self {
+            Node::Leaf(a) => *a += add,
+            Node::Branch(_, box right) => right.add_right(add),
         }
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Fish(Number, Number);
-
-impl Fish {
-    fn new(left: Fish, right: Fish) -> Self {
-        Fish(Number::More(Box::new(left)), Number::More(Box::new(right)))
+impl From<&Node> for StringTreeNode {
+    fn from(n: &Node) -> Self {
+        match n {
+            Node::Leaf(s) => StringTreeNode::new(s.to_string()),
+            Node::Branch(box l, box r) => {
+                StringTreeNode::with_child_nodes(String::new(), vec![r, l].into_iter().map_into())
+            }
+        }
     }
 }
 
-fn parse_number(input: &str) -> (Number, &str) {
+impl Display for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", StringTreeNode::from(self))
+    }
+}
+
+fn parse_node(input: &str) -> (Node, &str) {
     match input.chars().next().unwrap() {
-        '[' => {
-            let (more, rest) = parse_pair(input);
-            (Number::More(Box::new(more)), rest)
-        }
+        '[' => parse_branch(input),
         '0'..='9' => {
             let n = String::from_iter(input.chars().take_while(|c| ('0'..='9').contains(c)));
             let (_, rest) = input.split_at(n.len());
-            (Number::Single(n.parse::<u8>().unwrap()), rest)
+            (Node::Leaf(n.parse::<u8>().unwrap()), rest)
         }
 
         invalid => panic!("unexpected {}", invalid),
     }
 }
 
-// 1,2
-fn parse_pair(input: &str) -> (Fish, &str) {
+fn parse_branch(input: &str) -> (Node, &str) {
     let (c, rest) = input.split_at(1);
     if c != "[" {
         panic!("expected [ got {}", c);
     }
-    let (first, rest) = parse_number(rest);
+    let (first, rest) = parse_node(rest);
     let (c, rest) = rest.split_at(1);
     if c != "," {
         panic!("expected , got {}", c);
     }
-    let (second, rest) = parse_number(rest);
+    let (second, rest) = parse_node(rest);
     let (c, rest) = rest.split_at(1);
     if c != "]" {
         panic!("expected ] got {}", c);
     }
-    (Fish(first, second), rest)
+    (Node::branch(first, second), rest)
 }
 
-fn parse(input: &str) -> Fish {
-    let (fish, _) = parse_pair(input);
-    fish
+fn parse(input: &str) -> Node {
+    let (node, _) = parse_branch(input);
+    node
 }
+struct ExplodeOutcome(u8, u8, Option<Node>);
 
-impl Fish {
-    fn add_left(&mut self, add: u8) {
-        match &mut self.0 {
-            Number::Single(a) => *a += add,
-            Number::More(fish) => fish.add_left(add),
-        }
-    }
-    fn add_right(&mut self, add: u8) {
-        match &mut self.1 {
-            Number::Single(a) => *a += add,
-            Number::More(fish) => fish.add_right(add),
-        }
-    }
-}
-
-struct ExplodeOutcome(u8, u8, Option<Fish>);
-
-fn explode_rec(f: &Fish, depth: u8) -> Option<ExplodeOutcome> {
-    match f {
-        Fish(Number::Single(left), Number::Single(right)) if depth == 4 => {
+fn explode_node(n: &Node, depth: u8) -> Option<ExplodeOutcome> {
+    match n {
+        Node::Leaf(_) => None,
+        Node::Branch(box Node::Leaf(left), box Node::Leaf(right)) if depth == 4 => {
             Some(ExplodeOutcome(*left, *right, None))
         }
-        Fish(Number::Single(_), Number::Single(_)) => None,
-        Fish(Number::More(left), Number::More(right)) => {
-            if let Some(ExplodeOutcome(a, b, f)) = explode_rec(&left, depth + 1) {
+        Node::Branch(box left, box right) => {
+            if let Some(ExplodeOutcome(a, b, n)) = explode_node(left, depth + 1) {
                 let mut new_right = right.clone();
                 new_right.add_left(b);
                 Some(ExplodeOutcome(
                     a,
                     0,
-                    Some(Fish(Number::more(f), Number::More(new_right))),
+                    Some(Node::branch(n.unwrap_or(Node::Leaf(0)), new_right)),
                 ))
-            } else if let Some(ExplodeOutcome(a, b, f)) = explode_rec(&right, depth + 1) {
+            } else if let Some(ExplodeOutcome(a, b, n)) = explode_node(right, depth + 1) {
                 let mut new_left = left.clone();
                 new_left.add_right(a);
                 Some(ExplodeOutcome(
                     0,
                     b,
-                    Some(Fish(Number::More(new_left), Number::more(f))),
+                    Some(Node::branch(new_left, n.unwrap_or(Node::Leaf(0)))),
                 ))
             } else {
                 None
             }
         }
-
-        Fish(Number::Single(left), Number::More(right)) => match explode_rec(right, depth + 1) {
-            Some(ExplodeOutcome(a, b, f)) => Some(ExplodeOutcome(
-                0,
-                b,
-                Some(Fish(Number::single(left + a), Number::more(f))),
-            )),
-            None => None,
-        },
-
-        Fish(Number::More(left), Number::Single(right)) => match explode_rec(left, depth + 1) {
-            Some(ExplodeOutcome(a, b, f)) => Some(ExplodeOutcome(
-                a,
-                0,
-                Some(Fish(Number::more(f), Number::single(right + b))),
-            )),
-            None => None,
-        },
     }
 }
 
-fn explode(f: Fish) -> Option<Fish> {
-    if let Some(ExplodeOutcome(_, _, Some(fish))) = explode_rec(&f, 0) {
+fn explode(f: Node) -> Option<Node> {
+    if let Some(ExplodeOutcome(_, _, Some(fish))) = explode_node(&f, 0) {
         Some(fish)
     } else {
         None
     }
 }
 
-fn split_n(n: Number) -> Option<Number> {
+fn split(n: Node) -> Option<Node> {
     match n {
-        Number::Single(v) if v >= 10 => Some(Number::More(Box::new(Fish(
-            Number::single(v.div_floor(&2)),
-            Number::single(v.div_ceil(&2)),
-        )))),
-        Number::More(box Fish(left, right)) => {
-            if let Some(n) = split_n(left.clone()) {
-                Some(Number::More(Box::new(Fish(n, right))))
-            } else if let Some(n) = split_n(right.clone()) {
-                Some(Number::More(Box::new(Fish(left, n))))
+        Node::Leaf(v) if v >= 10 => Some(Node::branch(
+            Node::Leaf(v.div_floor(&2)),
+            Node::Leaf(v.div_ceil(&2)),
+        )),
+        Node::Branch(box left, box right) => {
+            if let Some(n) = split(left.clone()) {
+                Some(Node::branch(n, right))
+            } else if let Some(n) = split(right.clone()) {
+                Some(Node::branch(left, n))
             } else {
                 None
             }
@@ -180,15 +159,7 @@ fn split_n(n: Number) -> Option<Number> {
     }
 }
 
-fn split(f: Fish) -> Option<Fish> {
-    if let Some(Number::More(box f)) = split_n(Number::More(Box::new(f))) {
-        Some(f)
-    } else {
-        None
-    }
-}
-
-fn reduce(fish: Fish) -> Fish {
+fn reduce(fish: Node) -> Node {
     let mut fish = fish;
     loop {
         if let Some(f) = explode(fish.clone()) {
@@ -206,32 +177,25 @@ fn reduce(fish: Fish) -> Fish {
     fish
 }
 
-fn sum(left: Fish, right: Fish) -> Fish {
-    reduce(Fish(
-        Number::More(Box::new(left)),
-        Number::More(Box::new(right)),
-    ))
+fn sum(left: Node, right: Node) -> Node {
+    reduce(Node::branch(left, right))
 }
 
-fn sum_vec(fish: Vec<Fish>) -> Fish {
+fn sum_vec(fish: Vec<Node>) -> Node {
     fish.into_iter().reduce(sum).unwrap()
 }
 
-fn magnitude_n(n: &Number) -> usize {
+fn magnitude(n: &Node) -> usize {
     match n {
-        Number::Single(v) => *v as usize,
-        Number::More(box Fish(left, right)) => magnitude_n(left) * 3 + magnitude_n(right) * 2,
+        Node::Leaf(v) => *v as usize,
+        Node::Branch(box left, box right) => magnitude(left) * 3 + magnitude(right) * 2,
     }
-}
-
-fn magnitude(fish: &Fish) -> usize {
-    magnitude_n(&Number::More(Box::new(fish.clone())))
 }
 
 impl Solver for Day18 {
     type Output = usize;
 
-    type Input = Vec<Fish>;
+    type Input = Vec<Node>;
 
     fn parse(input: &str) -> Self::Input {
         input.lines().map(|l| parse(l.trim())).collect()
@@ -256,26 +220,6 @@ impl Solver for Day18 {
     }
 }
 
-fn to_str(lr: &str, n: Number) -> StringTreeNode {
-    match n {
-        Number::Single(s) => StringTreeNode::new(s.to_string()),
-        Number::More(box Fish(l, r)) => StringTreeNode::with_child_nodes(
-            lr.to_string(),
-            vec![to_str("r", r), to_str("l", l)].into_iter(),
-        ),
-    }
-}
-
-fn print(f: Fish) -> String {
-    to_str("", Number::More(Box::new(f))).to_string()
-}
-
-impl Display for Fish {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", print(self.clone()))
-    }
-}
-
 #[cfg(test)]
 mod test {
     use crate::Sample;
@@ -284,20 +228,14 @@ mod test {
 
     #[test]
     fn test_parse() {
-        assert_eq!(parse("[1,2]"), Fish(Number::Single(1), Number::Single(2)));
+        assert_eq!(parse("[1,2]"), Node::branch(Node::Leaf(1), Node::Leaf(2)));
         assert_eq!(
             parse("[1,[2,3]]"),
-            Fish(
-                Number::Single(1),
-                Number::More(Box::new(Fish(Number::Single(2), Number::Single(3))))
-            )
+            Node::branch(Node::Leaf(1), Node::branch(Node::Leaf(2), Node::Leaf(3)))
         );
         assert_eq!(
             parse("[[1,2],3]"),
-            Fish(
-                Number::More(Box::new(Fish(Number::Single(1), Number::Single(2)))),
-                Number::Single(3),
-            )
+            Node::branch(Node::branch(Node::Leaf(1), Node::Leaf(2)), Node::Leaf(3),)
         );
     }
 
