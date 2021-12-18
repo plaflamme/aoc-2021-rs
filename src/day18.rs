@@ -88,7 +88,7 @@ impl Node {
 
     fn reduce(&mut self) {
         loop {
-            if let Some(_) = self.explode() {
+            if self.explode().is_some() {
                 log::debug!("exp: {}", self);
                 continue;
             } else if self.split() {
@@ -188,11 +188,14 @@ impl Solver for Day18 {
         input
             .into_iter()
             .combinations(2)
-            .flat_map(|mut c| {
-                let a = sum_vec(c.clone()).magnitude();
-                c.reverse();
-                let b = sum_vec(c).magnitude();
-                vec![a, b]
+            .flat_map(|n| {
+                if let [left, right] = n.as_slice() {
+                    let a = Node::sum(left.clone(), right.clone()).magnitude();
+                    let b = Node::sum(right.clone(), left.clone()).magnitude();
+                    vec![a, b]
+                } else {
+                    unreachable!();
+                }
             })
             .max()
             .unwrap()
