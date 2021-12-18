@@ -16,6 +16,7 @@ num = "0.4"
 pathfinding = "3.0.5"
 bitvec = "0.22.3"
 bitter = "0.5.1"
+text_trees = "0.1.2"
 
 [dev-dependencies]
 criterion = "0.3"

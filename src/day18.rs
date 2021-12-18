@@ -1,8 +1,24 @@
+use std::fmt::Display;
+
 use crate::{Day18, Solver};
 use itertools::Itertools;
 use num::Integer;
+use text_trees::{StringTreeNode, TreeNode};
 
-sample!(Day18, "", "");
+sample!(
+    Day18,
+    "[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]
+[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]
+[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]
+[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]
+[7,[5,[[3,8],[1,4]]]]
+[[2,[2,2]],[8,[8,1]]]
+[2,9]
+[1,[[[9,3],9],[[9,0],[0,7]]]]
+[[[5,[7,4]],7],1]
+[[[[4,2],2],6],[8,7]]",
+    "4140"
+);
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum Number {
@@ -24,6 +40,12 @@ impl Number {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Fish(Number, Number);
+
+impl Fish {
+    fn new(left: Fish, right: Fish) -> Self {
+        Fish(Number::More(Box::new(left)), Number::More(Box::new(right)))
+    }
+}
 
 fn parse_number(input: &str) -> (Number, &str) {
     match input.chars().next().unwrap() {
@@ -69,13 +91,13 @@ impl Fish {
     fn add_left(&mut self, add: u8) {
         match &mut self.0 {
             Number::Single(a) => *a += add,
-            Number::More(f) => f.add_left(add),
+            Number::More(fish) => fish.add_left(add),
         }
     }
     fn add_right(&mut self, add: u8) {
         match &mut self.1 {
             Number::Single(a) => *a += add,
-            Number::More(f) => f.add_right(add),
+            Number::More(fish) => fish.add_right(add),
         }
     }
 }
@@ -101,7 +123,7 @@ fn explode_rec(f: &Fish, depth: u8) -> Option<ExplodeOutcome> {
                 let mut new_left = left.clone();
                 new_left.add_right(a);
                 Some(ExplodeOutcome(
-                    a,
+                    0,
                     b,
                     Some(Fish(Number::More(new_left), Number::more(f))),
                 ))
@@ -165,6 +187,35 @@ fn split(f: Fish) -> Option<Fish> {
     }
 }
 
+fn reduce(fish: Fish) -> Fish {
+    let mut fish = fish;
+    loop {
+        if let Some(f) = explode(fish.clone()) {
+            log::debug!("exp: {}", f);
+            fish = f;
+            continue;
+        } else if let Some(f) = split(fish.clone()) {
+            log::debug!("spl: {}", f);
+            fish = f;
+            continue;
+        } else {
+            break;
+        }
+    }
+    fish
+}
+
+fn sum(left: Fish, right: Fish) -> Fish {
+    reduce(Fish(
+        Number::More(Box::new(left)),
+        Number::More(Box::new(right)),
+    ))
+}
+
+fn sum_vec(fish: Vec<Fish>) -> Fish {
+    fish.into_iter().reduce(sum).unwrap()
+}
+
 impl Solver for Day18 {
     type Output = usize;
 
@@ -183,8 +234,30 @@ impl Solver for Day18 {
     }
 }
 
+fn to_str(lr: &str, n: Number) -> StringTreeNode {
+    match n {
+        Number::Single(s) => StringTreeNode::new(s.to_string()),
+        Number::More(box Fish(l, r)) => StringTreeNode::with_child_nodes(
+            lr.to_string(),
+            vec![to_str("r", r), to_str("l", l)].into_iter(),
+        ),
+    }
+}
+
+fn print(f: Fish) -> String {
+    to_str("", Number::More(Box::new(f))).to_string()
+}
+
+impl Display for Fish {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", print(self.clone()))
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use crate::Sample;
+
     use super::*;
 
     #[test]
@@ -241,6 +314,52 @@ mod test {
         assert_eq!(
             split(split(fish).unwrap()),
             Some(parse("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]"))
+        );
+    }
+
+    #[test]
+    fn test_reduce() {
+        let fish = parse("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]");
+        assert_eq!(reduce(fish), parse("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"));
+    }
+
+    #[test]
+    fn test_simple_sum() {
+        let fish = <Day18 as Solver>::parse(
+            "[1,1]
+[2,2]
+[3,3]
+[4,4]",
+        );
+        assert_eq!(sum_vec(fish), parse("[[[[1,1],[2,2]],[3,3]],[4,4]]"));
+
+        let fish = <Day18 as Solver>::parse(
+            "[1,1]
+[2,2]
+[3,3]
+[4,4]
+[5,5]",
+        );
+        assert_eq!(sum_vec(fish), parse("[[[[3,0],[5,3]],[4,4]],[5,5]]"));
+
+        let fish = <Day18 as Solver>::parse(
+            "[1,1]
+[2,2]
+[3,3]
+[4,4]
+[5,5]
+[6,6]",
+        );
+        assert_eq!(sum_vec(fish), parse("[[[[5,0],[7,4]],[5,5]],[6,6]]"));
+    }
+
+    #[test]
+    fn test_sum() {
+        let fish = <Day18 as Solver>::parse(Day18::CONTENT);
+        let fish = fish.into_iter().reduce(|a, b| sum(a, b)).unwrap();
+        assert_eq!(
+            fish,
+            parse("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
         );
     }
 }
