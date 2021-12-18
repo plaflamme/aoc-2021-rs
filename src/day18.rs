@@ -85,6 +85,33 @@ impl Node {
     fn explode(&mut self) -> Option<(u8, u8)> {
         self.explode_rec(0)
     }
+
+    fn reduce(&mut self) {
+        loop {
+            if let Some(_) = self.explode() {
+                log::debug!("exp: {}", self);
+                continue;
+            } else if self.split() {
+                log::debug!("spl: {}", self);
+                continue;
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn sum(lhs: Node, rhs: Node) -> Self {
+        let mut n = Node::branch(lhs, rhs);
+        n.reduce();
+        n
+    }
+
+    fn magnitude(&self) -> usize {
+        match self {
+            Node::Leaf(v) => *v as usize,
+            Node::Branch(box left, box right) => left.magnitude() * 3 + right.magnitude() * 2,
+        }
+    }
 }
 
 impl From<&Node> for StringTreeNode {
@@ -140,35 +167,8 @@ fn parse(input: &str) -> Node {
     node
 }
 
-fn reduce(fish: Node) -> Node {
-    let mut fish = fish;
-    loop {
-        if let Some(_) = fish.explode() {
-            log::debug!("exp: {}", fish);
-            continue;
-        } else if fish.split() {
-            log::debug!("spl: {}", fish);
-            continue;
-        } else {
-            break;
-        }
-    }
-    fish
-}
-
-fn sum(left: Node, right: Node) -> Node {
-    reduce(Node::branch(left, right))
-}
-
 fn sum_vec(fish: Vec<Node>) -> Node {
-    fish.into_iter().reduce(sum).unwrap()
-}
-
-fn magnitude(n: &Node) -> usize {
-    match n {
-        Node::Leaf(v) => *v as usize,
-        Node::Branch(box left, box right) => magnitude(left) * 3 + magnitude(right) * 2,
-    }
+    fish.into_iter().reduce(Node::sum).unwrap()
 }
 
 impl Solver for Day18 {
@@ -181,7 +181,7 @@ impl Solver for Day18 {
     }
 
     fn part1(input: Self::Input) -> Self::Output {
-        magnitude(&sum_vec(input))
+        sum_vec(input).magnitude()
     }
 
     fn part2(input: Self::Input) -> Self::Output {
@@ -189,9 +189,9 @@ impl Solver for Day18 {
             .into_iter()
             .combinations(2)
             .flat_map(|mut c| {
-                let a = magnitude(&sum_vec(c.clone()));
+                let a = sum_vec(c.clone()).magnitude();
                 c.reverse();
-                let b = magnitude(&sum_vec(c));
+                let b = sum_vec(c).magnitude();
                 vec![a, b]
             })
             .max()
@@ -254,8 +254,9 @@ mod test {
 
     #[test]
     fn test_reduce() {
-        let fish = parse("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]");
-        assert_eq!(reduce(fish), parse("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"));
+        let mut fish = parse("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]");
+        fish.reduce();
+        assert_eq!(fish, parse("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"));
     }
 
     #[test]
@@ -299,16 +300,14 @@ mod test {
 
     #[test]
     fn test_magnitude() {
-        assert_eq!(magnitude(&parse("[9,1]")), 29);
-        assert_eq!(magnitude(&parse("[[1,2],[[3,4],5]]")), 143);
-        assert_eq!(magnitude(&parse("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")), 1384);
-        assert_eq!(magnitude(&parse("[[[[1,1],[2,2]],[3,3]],[4,4]]")), 445);
-        assert_eq!(magnitude(&parse("[[[[3,0],[5,3]],[4,4]],[5,5]]")), 791);
-        assert_eq!(magnitude(&parse("[[[[5,0],[7,4]],[5,5]],[6,6]]")), 1137);
+        assert_eq!(parse("[9,1]").magnitude(), 29);
+        assert_eq!(parse("[[1,2],[[3,4],5]]").magnitude(), 143);
+        assert_eq!(parse("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]").magnitude(), 1384);
+        assert_eq!(parse("[[[[1,1],[2,2]],[3,3]],[4,4]]").magnitude(), 445);
+        assert_eq!(parse("[[[[3,0],[5,3]],[4,4]],[5,5]]").magnitude(), 791);
+        assert_eq!(parse("[[[[5,0],[7,4]],[5,5]],[6,6]]").magnitude(), 1137);
         assert_eq!(
-            magnitude(&parse(
-                "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"
-            )),
+            parse("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]").magnitude(),
             3488
         );
     }
