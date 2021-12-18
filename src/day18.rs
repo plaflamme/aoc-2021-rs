@@ -57,6 +57,34 @@ impl Node {
             _ => false,
         }
     }
+
+    fn explode_rec(&mut self, depth: u8) -> Option<(u8, u8)> {
+        if depth == 4 {
+            // TODO: how do I avoid the clone here?
+            if let Node::Branch(box Node::Leaf(left), box Node::Leaf(right)) = self.clone() {
+                *self = Node::Leaf(0);
+                return Some((left, right));
+            }
+        }
+
+        match self {
+            Node::Leaf(_) => None,
+            Node::Branch(box left, box right) => {
+                if let Some((a, b)) = left.explode_rec(depth + 1) {
+                    right.add_left(b);
+                    Some((a, 0))
+                } else if let Some((a, b)) = right.explode_rec(depth + 1) {
+                    left.add_right(a);
+                    Some((0, b))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+    fn explode(&mut self) -> Option<(u8, u8)> {
+        self.explode_rec(0)
+    }
 }
 
 impl From<&Node> for StringTreeNode {
@@ -111,52 +139,12 @@ fn parse(input: &str) -> Node {
     let (node, _) = parse_branch(input);
     node
 }
-struct ExplodeOutcome(u8, u8, Option<Node>);
-
-fn explode_node(n: &Node, depth: u8) -> Option<ExplodeOutcome> {
-    match n {
-        Node::Leaf(_) => None,
-        Node::Branch(box Node::Leaf(left), box Node::Leaf(right)) if depth == 4 => {
-            Some(ExplodeOutcome(*left, *right, None))
-        }
-        Node::Branch(box left, box right) => {
-            if let Some(ExplodeOutcome(a, b, n)) = explode_node(left, depth + 1) {
-                let mut new_right = right.clone();
-                new_right.add_left(b);
-                Some(ExplodeOutcome(
-                    a,
-                    0,
-                    Some(Node::branch(n.unwrap_or(Node::Leaf(0)), new_right)),
-                ))
-            } else if let Some(ExplodeOutcome(a, b, n)) = explode_node(right, depth + 1) {
-                let mut new_left = left.clone();
-                new_left.add_right(a);
-                Some(ExplodeOutcome(
-                    0,
-                    b,
-                    Some(Node::branch(new_left, n.unwrap_or(Node::Leaf(0)))),
-                ))
-            } else {
-                None
-            }
-        }
-    }
-}
-
-fn explode(f: Node) -> Option<Node> {
-    if let Some(ExplodeOutcome(_, _, Some(fish))) = explode_node(&f, 0) {
-        Some(fish)
-    } else {
-        None
-    }
-}
 
 fn reduce(fish: Node) -> Node {
     let mut fish = fish;
     loop {
-        if let Some(f) = explode(fish.clone()) {
-            log::debug!("exp: {}", f);
-            fish = f;
+        if let Some(_) = fish.explode() {
+            log::debug!("exp: {}", fish);
             continue;
         } else if fish.split() {
             log::debug!("spl: {}", fish);
@@ -232,27 +220,27 @@ mod test {
 
     #[test]
     fn test_explode() {
-        let fish = parse("[[[[[9,8],1],2],3],4]");
-        assert_eq!(explode(fish), Some(parse("[[[[0,9],2],3],4]")));
+        let mut fish = parse("[[[[[9,8],1],2],3],4]");
+        fish.explode();
+        assert_eq!(fish, parse("[[[[0,9],2],3],4]"));
 
-        let fish = parse("[7,[6,[5,[4,[3,2]]]]]");
-        assert_eq!(explode(fish), Some(parse("[7,[6,[5,[7,0]]]]")));
+        let mut fish = parse("[7,[6,[5,[4,[3,2]]]]]");
+        fish.explode();
+        assert_eq!(fish, parse("[7,[6,[5,[7,0]]]]"));
 
-        let fish = parse("[[6,[5,[4,[3,2]]]],1]");
-        assert_eq!(explode(fish), Some(parse("[[6,[5,[7,0]]],3]")));
+        let mut fish = parse("[[6,[5,[4,[3,2]]]],1]");
+        fish.explode();
+        assert_eq!(fish, parse("[[6,[5,[7,0]]],3]"));
 
-        let fish = parse("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]");
-        assert_eq!(
-            explode(fish.clone()),
-            Some(parse("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]"))
-        );
-        assert_eq!(
-            explode(explode(fish).unwrap()),
-            Some(parse("[[3,[2,[8,0]]],[9,[5,[7,0]]]]"))
-        );
+        let mut fish = parse("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]");
+        fish.explode();
+        assert_eq!(fish, parse("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]"));
+        fish.explode();
+        assert_eq!(fish, parse("[[3,[2,[8,0]]],[9,[5,[7,0]]]]"));
 
-        let fish = parse("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]");
-        assert_eq!(explode(fish), Some(parse("[[3,[2,[8,0]]],[9,[5,[7,0]]]]")));
+        let mut fish = parse("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]");
+        fish.explode();
+        assert_eq!(fish, parse("[[3,[2,[8,0]]],[9,[5,[7,0]]]]"));
     }
 
     #[test]
