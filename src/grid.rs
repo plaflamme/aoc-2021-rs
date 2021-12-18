@@ -536,7 +536,7 @@ mod test {
     #[should_panic]
     fn test_grid_from_row_iter_will_panic() {
         let rows = vec![vec![1, 2, 3], vec![4, 5]];
-        Grid::from_row_iter(rows.clone().into_iter());
+        Grid::from_row_iter(rows.into_iter());
     }
     #[test]
     fn test_grid_from_iter() {
@@ -548,7 +548,7 @@ mod test {
     #[test]
     fn test_grid_pts() {
         let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
-        let grid = Grid::from_iter(3, rows.clone().into_iter().flatten());
+        let grid = Grid::from_iter(3, rows.into_iter().flatten());
         let pts = grid.pts().collect_vec();
         assert_eq!(
             pts,

@@ -234,7 +234,7 @@ mod test {
         let s = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab";
         let signals = s
             .split_ascii_whitespace()
-            .map(|s| Signal::from_str(s))
+            .map(Signal::from_str)
             .collect();
 
         let decoder = Decoder::new(Panel(signals));
