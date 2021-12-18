@@ -46,6 +46,17 @@ impl Node {
             Node::Branch(_, box right) => right.add_right(add),
         }
     }
+
+    fn split(&mut self) -> bool {
+        match self {
+            Node::Leaf(v) if *v >= 10 => {
+                *self = Node::branch(Node::Leaf(v.div_floor(&2)), Node::Leaf(v.div_ceil(&2)));
+                true
+            }
+            Node::Branch(box left, box right) => left.split() || right.split(),
+            _ => false,
+        }
+    }
 }
 
 impl From<&Node> for StringTreeNode {
@@ -140,25 +151,6 @@ fn explode(f: Node) -> Option<Node> {
     }
 }
 
-fn split(n: Node) -> Option<Node> {
-    match n {
-        Node::Leaf(v) if v >= 10 => Some(Node::branch(
-            Node::Leaf(v.div_floor(&2)),
-            Node::Leaf(v.div_ceil(&2)),
-        )),
-        Node::Branch(box left, box right) => {
-            if let Some(n) = split(left.clone()) {
-                Some(Node::branch(n, right))
-            } else if let Some(n) = split(right.clone()) {
-                Some(Node::branch(left, n))
-            } else {
-                None
-            }
-        }
-        _ => None,
-    }
-}
-
 fn reduce(fish: Node) -> Node {
     let mut fish = fish;
     loop {
@@ -166,9 +158,8 @@ fn reduce(fish: Node) -> Node {
             log::debug!("exp: {}", f);
             fish = f;
             continue;
-        } else if let Some(f) = split(fish.clone()) {
-            log::debug!("spl: {}", f);
-            fish = f;
+        } else if fish.split() {
+            log::debug!("spl: {}", fish);
             continue;
         } else {
             break;
@@ -266,15 +257,11 @@ mod test {
 
     #[test]
     fn test_split() {
-        let fish = parse("[[[[0,7],4],[15,[0,13]]],[1,1]]");
-        assert_eq!(
-            split(fish.clone()),
-            Some(parse("[[[[0,7],4],[[7,8],[0,13]]],[1,1]]"))
-        );
-        assert_eq!(
-            split(split(fish).unwrap()),
-            Some(parse("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]"))
-        );
+        let mut fish = parse("[[[[0,7],4],[15,[0,13]]],[1,1]]");
+        assert!(fish.split());
+        assert_eq!(fish, parse("[[[[0,7],4],[[7,8],[0,13]]],[1,1]]"));
+        assert!(fish.split());
+        assert_eq!(fish, parse("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]"));
     }
 
     #[test]
