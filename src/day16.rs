@@ -86,7 +86,7 @@ fn parse_op(op: u8, bits: &Slice) -> (Token, &Slice) {
         let length: usize = n.load_be();
         let (mut inner, bits) = bits.split_at(length);
         let mut packets = Vec::new();
-        while inner.len() > 0 {
+        while !inner.is_empty() {
             let (packet, remain) = Packet::parse(inner);
             inner = remain;
             packets.push(packet);
@@ -109,8 +109,8 @@ impl Packet {
 
     fn sum_versions(&self) -> usize {
         let inner_sum = match &self.1 {
-            Token::Literal(_) => 0_usize,
-            Token::Op(_, packets) => packets.into_iter().map(|p| p.sum_versions()).sum::<usize>(),
+            Token::Literal(_) => 0,
+            Token::Op(_, packets) => packets.iter().map(|p| p.sum_versions()).sum(),
         };
         self.0 as usize + inner_sum
     }
@@ -133,11 +133,7 @@ impl Packet {
                             Op::Equal => left == right,
                             _ => unreachable!(),
                         };
-                        if result {
-                            1
-                        } else {
-                            0
-                        }
+                        result.into()
                     }
                 }
             }
@@ -169,6 +165,133 @@ impl Solver for Day16 {
 
     fn part2(input: Self::Input) -> Self::Output {
         Packet::parse(&input).0.compute()
+    }
+}
+
+mod bitbit {
+
+    use super::*;
+    use bitter::BigEndianReader;
+    use bitter::BitReader;
+
+    fn parse_lit<B: BitReader>(reader: &mut B) -> Token {
+        let mut lit = 0;
+        loop {
+            let more = reader.read_bit_unchecked();
+            lit <<= 4;
+            lit |= reader.read_bits_unchecked(4);
+            if !more {
+                break Token::Literal(lit as usize);
+            }
+        }
+    }
+
+    fn parse_op<B: BitReader>(op: Op, reader: &mut B) -> Token {
+        if reader.read_bit_unchecked() {
+            // 11 bits
+            let n_packets = reader.read_bits_unchecked(11);
+            let mut packets = Vec::with_capacity(n_packets as usize);
+            (0..n_packets).for_each(|_| packets.push(parse_packet(reader)));
+            Token::Op(op, packets)
+        } else {
+            // 15 bits
+            let length = reader.read_bits_unchecked(15) as usize;
+            let mut packets = Vec::new();
+            let init = reader.bits_remaining().unwrap();
+            loop {
+                packets.push(parse_packet(reader));
+                let remain = reader.bits_remaining().unwrap();
+                if init - remain == length {
+                    break;
+                } else if init - remain > length {
+                    panic!("oops")
+                }
+            }
+            Token::Op(op, packets)
+        }
+    }
+
+    fn parse_packet<B: BitReader>(reader: &mut B) -> Packet {
+        let v = reader.read_bits_unchecked(3);
+        let token = match reader.read_bits_unchecked(3) {
+            4 => parse_lit(reader),
+            op => parse_op(Op::from(op as u8), reader),
+        };
+        Packet(v as u8, token)
+    }
+
+    pub(super) fn parse(bits: &[u8]) -> Packet {
+        parse_packet(&mut BigEndianReader::new(bits))
+    }
+
+    #[cfg(test)]
+    mod test {
+        use bitter::BigEndianReader;
+
+        use super::*;
+
+        #[test]
+        fn test_parse_lit() {
+            let bits = <Day16 as Solver<Bitter>>::parse("D2FE28");
+            let lit = parse_packet(&mut BigEndianReader::new(&bits));
+            assert_eq!(lit, Packet(6, Token::Literal(2021)));
+        }
+
+        #[test]
+        fn test_parse_op() {
+            let bits = <Day16 as Solver<Bitter>>::parse("38006F45291200");
+            let packet = parse_packet(&mut BigEndianReader::new(&bits));
+            assert_eq!(
+                packet,
+                Packet(
+                    1,
+                    Token::Op(
+                        Op::from(6),
+                        vec![Packet(6, Token::Literal(10)), Packet(2, Token::Literal(20))]
+                    )
+                )
+            );
+            let bits = <Day16 as Solver<Bitter>>::parse("EE00D40C823060");
+            let packet = parse_packet(&mut BigEndianReader::new(&bits));
+            assert_eq!(
+                packet,
+                Packet(
+                    7,
+                    Token::Op(
+                        Op::from(3),
+                        vec![
+                            Packet(2, Token::Literal(1)),
+                            Packet(4, Token::Literal(2)),
+                            Packet(1, Token::Literal(3))
+                        ]
+                    )
+                )
+            );
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Bitter;
+impl Solver<Bitter> for Day16 {
+    type Output = usize;
+
+    type Input = Vec<u8>;
+
+    fn parse(input: &str) -> Self::Input {
+        input
+            .chars()
+            .tuples()
+            .map(|(a, b)| u8::from_str_radix(&String::from_iter([a, b]), 16).unwrap())
+            .collect()
+    }
+
+    fn part1(input: Self::Input) -> Self::Output {
+        bitbit::parse(&input).sum_versions()
+    }
+
+    fn part2(input: Self::Input) -> Self::Output {
+        bitbit::parse(&input).compute()
     }
 }
 
