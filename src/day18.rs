@@ -7,17 +7,18 @@ use text_trees::{StringTreeNode, TreeNode};
 
 sample!(
     Day18,
-    "[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]
-[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]
-[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]
-[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]
-[7,[5,[[3,8],[1,4]]]]
-[[2,[2,2]],[8,[8,1]]]
-[2,9]
-[1,[[[9,3],9],[[9,0],[0,7]]]]
-[[[5,[7,4]],7],1]
-[[[[4,2],2],6],[8,7]]",
-    "4140"
+    "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
+[[[5,[2,8]],4],[5,[[9,9],0]]]
+[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
+[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
+[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
+[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
+[[[[5,4],[7,7]],8],[[8,3],8]]
+[[9,3],[[9,9],[6,[4,9]]]]
+[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
+[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]",
+    "4140",
+    "3993"
 );
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -216,6 +217,17 @@ fn sum_vec(fish: Vec<Fish>) -> Fish {
     fish.into_iter().reduce(sum).unwrap()
 }
 
+fn magnitude_n(n: &Number) -> usize {
+    match n {
+        Number::Single(v) => *v as usize,
+        Number::More(box Fish(left, right)) => magnitude_n(left) * 3 + magnitude_n(right) * 2,
+    }
+}
+
+fn magnitude(fish: &Fish) -> usize {
+    magnitude_n(&Number::More(Box::new(fish.clone())))
+}
+
 impl Solver for Day18 {
     type Output = usize;
 
@@ -226,11 +238,21 @@ impl Solver for Day18 {
     }
 
     fn part1(input: Self::Input) -> Self::Output {
-        todo!()
+        magnitude(&sum_vec(input))
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        todo!()
+        input
+            .into_iter()
+            .combinations(2)
+            .flat_map(|mut c| {
+                let a = magnitude(&sum_vec(c.clone()));
+                c.reverse();
+                let b = magnitude(&sum_vec(c));
+                vec![a, b]
+            })
+            .max()
+            .unwrap()
     }
 }
 
@@ -356,10 +378,25 @@ mod test {
     #[test]
     fn test_sum() {
         let fish = <Day18 as Solver>::parse(Day18::CONTENT);
-        let fish = fish.into_iter().reduce(|a, b| sum(a, b)).unwrap();
         assert_eq!(
-            fish,
-            parse("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
+            sum_vec(fish),
+            parse("[[[[6,6],[7,6]],[[7,7],[7,0]]],[[[7,7],[7,7]],[[7,8],[9,9]]]]")
+        );
+    }
+
+    #[test]
+    fn test_magnitude() {
+        assert_eq!(magnitude(&parse("[9,1]")), 29);
+        assert_eq!(magnitude(&parse("[[1,2],[[3,4],5]]")), 143);
+        assert_eq!(magnitude(&parse("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")), 1384);
+        assert_eq!(magnitude(&parse("[[[[1,1],[2,2]],[3,3]],[4,4]]")), 445);
+        assert_eq!(magnitude(&parse("[[[[3,0],[5,3]],[4,4]],[5,5]]")), 791);
+        assert_eq!(magnitude(&parse("[[[[5,0],[7,4]],[5,5]],[6,6]]")), 1137);
+        assert_eq!(
+            magnitude(&parse(
+                "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"
+            )),
+            3488
         );
     }
 }
