@@ -16,7 +16,7 @@ pub enum Dir {
 }
 
 impl Dir {
-    pub fn all() -> impl Iterator<Item = Dir> {
+    pub fn all() -> impl Iterator<Item = Dir> + Clone {
         [Dir::Up, Dir::Down, Dir::Left, Dir::Right].into_iter()
     }
 
