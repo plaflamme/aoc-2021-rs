@@ -301,6 +301,22 @@ impl<T> Grid<T> {
         self.values.len() / self.w
     }
 
+    pub fn get<N>(&self, pt: Pt<N>) -> Option<&T>
+    where
+        N: Integer + Copy + FromPrimitive + ToPrimitive,
+    {
+        if pt.x < N::zero() || pt.x >= N::from_usize(self.width()).unwrap() {
+            return None;
+        }
+        if pt.y < N::zero() || pt.y >= N::from_usize(self.height()).unwrap() {
+            return None;
+        }
+        let x = N::to_usize(&pt.x).unwrap();
+        let y = N::to_usize(&pt.y).unwrap();
+        let v = &self.values[y * self.width() + x];
+        Some(v)
+    }
+
     /// An iterator over the coordinates
     pub fn pts<N>(&self) -> impl Iterator<Item = Pt<N>>
     where
