@@ -93,16 +93,25 @@ impl QuantumUniverse {
     }
 
     fn step_and_collapse(&mut self, player: usize) {
+        // borrow checker workaround, see unsafe comment below
+        let wins = &mut self.wins[player] as *mut usize;
+
         let new_states = self
             .games
             .iter()
             .flat_map(|(game, copies)| {
                 dice_tabulation()
                     .into_iter()
-                    .flat_map(|(rolled, times)| {
+                    .flat_map(move |(rolled, times)| {
                         let player_state = game.0[player].step(rolled);
                         if player_state.score >= 21 {
-                            self.wins[player] += copies * times;
+                            // danger!
+                            // what I want here is self.wins[player] but the borrow checker won't let me
+                            //   we have to .collect() this iterator, or use this unsafe workaround
+                            //   this reduces runtime from 30ms to 20ms
+                            unsafe {
+                                *wins += copies * times;
+                            }
                             None
                         } else {
                             let mut game = game.clone();
@@ -110,7 +119,6 @@ impl QuantumUniverse {
                             Some((game, copies * times))
                         }
                     })
-                    .collect_vec() // this is necessary because of self.wins reference; probably a limitation of the borrow checker
             })
             .into_grouping_map()
             .sum();
