@@ -13,15 +13,16 @@ sample!(
 ###B#C#B#D###
   #A#D#C#A#
   #########",
-    "12521"
+    "12521",
+    "44169"
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Amphipod {
-    A,
-    B,
-    C,
-    D,
+    A = 2,
+    B = 4,
+    C = 6,
+    D = 8,
 }
 
 impl Amphipod {
@@ -51,15 +52,15 @@ pub enum Slot {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Room([Slot; 2]);
+pub struct Room<const DEPTH: usize>([Slot; DEPTH]);
 
-impl Room {
+impl<const D: usize> Room<D> {
     fn empty() -> Self {
-        Self([Slot::Empty, Slot::Empty])
+        Self([Slot::Empty; D])
     }
 }
 
-impl Index<usize> for Room {
+impl<const D: usize> Index<usize> for Room<D> {
     type Output = Slot;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -67,83 +68,108 @@ impl Index<usize> for Room {
     }
 }
 
-impl IndexMut<usize> for Room {
+impl<const D: usize> IndexMut<usize> for Room<D> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.0[index]
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Cave {
-    hallway: [Slot; 11],
-    rooms: [Room; 4],
+pub struct Cave<const D: usize> {
+    hallway: [Slot; 11], // A better solution would have been to use actual stacks.
+    rooms: [Room<D>; 4],
 }
 
-impl Cave {
-    fn new(rooms: [Room; 4]) -> Self {
+impl<const D: usize> Cave<D> {
+    const SOLUTION: [Room<D>; 4] = [
+        Room([Slot::Occupied(Amphipod::A); D]),
+        Room([Slot::Occupied(Amphipod::B); D]),
+        Room([Slot::Occupied(Amphipod::C); D]),
+        Room([Slot::Occupied(Amphipod::D); D]),
+    ];
+    const HALLWAY: [Pt; 7] = [
+        Pt::new(0, 0),
+        Pt::new(1, 0),
+        Pt::new(3, 0),
+        Pt::new(5, 0),
+        Pt::new(7, 0),
+        Pt::new(9, 0),
+        Pt::new(10, 0),
+    ];
+
+    fn new(rooms: [Room<D>; 4]) -> Self {
         Self {
             hallway: [Slot::Empty; 11],
             rooms,
         }
     }
 
-    fn pts() -> impl Iterator<Item = Pt> {
-        (0..11).map(|x| Pt::new(x, 0)).chain(
-            [2, 4, 6, 8]
-                .into_iter()
-                .flat_map(|x| [Pt::new(x, 1), Pt::new(x, 2)]),
-        )
+    fn room_pts(a: Amphipod) -> impl Iterator<Item = Pt> {
+        (1..=D).map(move |d| Pt::new(a as u8, d as u8))
     }
 
-    fn all_landing_pts() -> impl Iterator<Item = Pt> {
-        Cave::pts().filter(|pt| {
-            if pt.y == 0 {
-                pt.x < 2 || pt.x > 8 || pt.x % 2 == 1
-            } else {
-                true
-            }
-        })
-    }
-
-    fn can_travel(&self, from: &Pt, to: &Pt, a: Amphipod) -> bool {
-        // to the hallway or within the same room is always legal
-        if to.y == 0 || from.x == to.x {
-            true
-        } else {
-            // otherwise, check that the destination room is empty or has the same kind of Amphipod
-            let other = if to.y == 1 {
-                Pt::new(to.x, 2)
-            } else {
-                Pt::new(to.x, 1)
-            };
-            let other = self[other];
-            self[to] == Slot::Empty && (other == Slot::Empty || other == Slot::Occupied(a))
-        }
-    }
-
-    fn available_landing_pts<'a>(&'a self, from: Pt, a: Amphipod) -> impl Iterator<Item = Pt> + 'a {
-        Cave::all_landing_pts()
-            .filter(move |pt| *pt != from)
-            .filter(|pt| self[pt] == Slot::Empty)
-            .filter(move |pt| self.can_travel(&from, pt, a))
-    }
-
-    fn slots(&self) -> impl Iterator<Item = (Pt, &Slot)> + '_ {
-        Cave::pts().map(|pt| (pt, &self[pt]))
-    }
-
-    fn amphipods(&self) -> impl Iterator<Item = (Pt, Amphipod)> + '_ {
-        self.slots()
-            .filter_map(|(pt, slot)| {
-                if let Slot::Occupied(a) = slot {
-                    Some((pt, *a))
+    // returns the deepest point in an Amphipod room if an amphipod can enter it
+    fn bottom_room_stack(&self, a: Amphipod) -> Option<Pt> {
+        let mut room_pts = Cave::<D>::room_pts(a);
+        let first = room_pts.next().unwrap();
+        if let Slot::Empty = self[first] {
+            room_pts.fold(Some(first), |top, b| {
+                if let Some(_) = top {
+                    let other = self[b];
+                    match other {
+                        Slot::Empty => Some(b),
+                        Slot::Occupied(o) if o == a => top,
+                        Slot::Occupied(_) => None,
+                    }
                 } else {
                     None
                 }
             })
-            .sorted_by(|(_, a), (_, b)| a.cmp(b)) // prioritize the least costly
+        } else {
+            None
+        }
     }
 
+    // an iterator over the valid pts an amphipod can move to
+    fn available_landing_pts<'a>(&'a self, from: Pt, a: Amphipod) -> impl Iterator<Item = Pt> + 'a {
+        Cave::<D>::HALLWAY
+            .into_iter()
+            .filter(move |_| from.y != 0) // an amphipod will stay in the same spot in the hallway once it's there
+            .filter(|pt| self[pt] == Slot::Empty)
+            .chain(self.bottom_room_stack(a).into_iter())
+            .filter(move |pt| *pt != from)
+    }
+
+    // an iterator over the first Amphipod in each room
+    fn top_room_stacks(&self) -> impl Iterator<Item = (Pt, Amphipod)> + '_ {
+        [Amphipod::A, Amphipod::B, Amphipod::C, Amphipod::D]
+            .into_iter()
+            .flat_map(|a| {
+                Cave::<D>::room_pts(a).find_map(|pt| {
+                    if let Slot::Occupied(a) = self[pt] {
+                        Some((pt, a))
+                    } else {
+                        None
+                    }
+                })
+            })
+    }
+
+    // an iterator over all the Amphipods that could move
+    fn movable_amphipods(&self) -> impl Iterator<Item = (Pt, Amphipod)> + '_ {
+        Cave::<D>::HALLWAY
+            .into_iter()
+            .filter_map(|pt| {
+                if let Slot::Occupied(a) = self[pt] {
+                    Some((pt, a))
+                } else {
+                    None
+                }
+            })
+            .chain(self.top_room_stacks())
+    }
+
+    // computes the distance between 2 points, if all slots in between are empty
     fn distance(&self, from: &Pt, to: &Pt) -> Option<usize> {
         let mut current = from.clone();
         let dx = (to.x as i8 - from.x as i8).signum();
@@ -166,8 +192,9 @@ impl Cave {
         }
     }
 
-    fn neighbour_caves(&self) -> impl Iterator<Item = (Cave, usize)> + '_ {
-        self.amphipods()
+    // an iterator over all caves that are one move away from self (with the cost of making that move)
+    fn neighbour_caves(&self) -> impl Iterator<Item = (Cave<D>, usize)> + '_ {
+        self.movable_amphipods()
             .flat_map(|(from, a)| {
                 self.available_landing_pts(from, a)
                     .map(move |to| (from, to, a))
@@ -185,17 +212,11 @@ impl Cave {
     }
 
     fn is_solved(&self) -> bool {
-        self.rooms
-            == [
-                Room([Slot::Occupied(Amphipod::A); 2]),
-                Room([Slot::Occupied(Amphipod::B); 2]),
-                Room([Slot::Occupied(Amphipod::C); 2]),
-                Room([Slot::Occupied(Amphipod::D); 2]),
-            ]
+        self.rooms == Cave::<D>::SOLUTION
     }
 }
 
-impl Index<&Pt> for Cave {
+impl<const D: usize> Index<&Pt> for Cave<D> {
     type Output = Slot;
 
     fn index(&self, index: &Pt) -> &Self::Output {
@@ -212,7 +233,7 @@ impl Index<&Pt> for Cave {
     }
 }
 
-impl IndexMut<&Pt> for Cave {
+impl<const D: usize> IndexMut<&Pt> for Cave<D> {
     fn index_mut(&mut self, index: &Pt) -> &mut Self::Output {
         if index.y == 0 {
             &mut self.hallway[index.x as usize]
@@ -227,7 +248,7 @@ impl IndexMut<&Pt> for Cave {
     }
 }
 
-impl Index<Pt> for Cave {
+impl<const D: usize> Index<Pt> for Cave<D> {
     type Output = Slot;
 
     fn index(&self, index: Pt) -> &Self::Output {
@@ -235,16 +256,49 @@ impl Index<Pt> for Cave {
     }
 }
 
-impl IndexMut<Pt> for Cave {
+impl<const D: usize> IndexMut<Pt> for Cave<D> {
     fn index_mut(&mut self, index: Pt) -> &mut Self::Output {
         &mut self[&index]
     }
 }
 
+fn solve<const D: usize>(input: [Room<D>; 4]) -> usize {
+    let (_, cost) = pathfinding::directed::dijkstra::dijkstra(
+        &Cave::<D>::new(input),
+        |cave| cave.neighbour_caves().collect_vec(), // damn
+        |cave| cave.is_solved(),
+    )
+    .unwrap();
+
+    cost
+}
+
+fn expand(input: [Room<2>; 4]) -> [Room<4>; 4] {
+    let mut expanded = [
+        Room([Slot::Empty; 4]),
+        Room([Slot::Empty; 4]),
+        Room([Slot::Empty; 4]),
+        Room([Slot::Empty; 4]),
+    ];
+    let expand_with = [
+        Room([Slot::Occupied(Amphipod::D); 2]),
+        Room([Slot::Occupied(Amphipod::C), Slot::Occupied(Amphipod::B)]),
+        Room([Slot::Occupied(Amphipod::B), Slot::Occupied(Amphipod::A)]),
+        Room([Slot::Occupied(Amphipod::A), Slot::Occupied(Amphipod::C)]),
+    ];
+    for r in 0..4 {
+        expanded[r][0] = input[r][0];
+        expanded[r][1] = expand_with[r][0];
+        expanded[r][2] = expand_with[r][1];
+        expanded[r][3] = input[r][1];
+    }
+    expanded
+}
+
 impl Solver for Day23 {
     type Output = usize;
 
-    type Input = [Room; 4];
+    type Input = [Room<2>; 4];
 
     fn parse(input: &str) -> Self::Input {
         let mut rooms = [Room::empty(); 4];
@@ -265,17 +319,11 @@ impl Solver for Day23 {
     }
 
     fn part1(input: Self::Input) -> Self::Output {
-        pathfinding::directed::dijkstra::dijkstra(
-            &Cave::new(input),
-            |cave| cave.neighbour_caves().collect_vec(), // damn
-            |cave| cave.is_solved(),
-        )
-        .unwrap()
-        .1
+        solve(input)
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        todo!()
+        solve(expand(input))
     }
 }
 
@@ -297,10 +345,37 @@ mod test {
             ],
         );
     }
+
     #[test]
-    fn test_one() {
-        let rooms = Day23::parse(Day23::CONTENT);
-        let cave = Cave::new(rooms);
-        dbg!(cave.neighbour_caves().collect_vec());
+    fn test_expand() {
+        assert_eq!(
+            expand(Day23::parse(Day23::CONTENT)),
+            [
+                Room([
+                    Slot::Occupied(Amphipod::B),
+                    Slot::Occupied(Amphipod::D),
+                    Slot::Occupied(Amphipod::D),
+                    Slot::Occupied(Amphipod::A)
+                ]),
+                Room([
+                    Slot::Occupied(Amphipod::C),
+                    Slot::Occupied(Amphipod::C),
+                    Slot::Occupied(Amphipod::B),
+                    Slot::Occupied(Amphipod::D)
+                ]),
+                Room([
+                    Slot::Occupied(Amphipod::B),
+                    Slot::Occupied(Amphipod::B),
+                    Slot::Occupied(Amphipod::A),
+                    Slot::Occupied(Amphipod::C)
+                ]),
+                Room([
+                    Slot::Occupied(Amphipod::D),
+                    Slot::Occupied(Amphipod::A),
+                    Slot::Occupied(Amphipod::C),
+                    Slot::Occupied(Amphipod::A)
+                ])
+            ],
+        );
     }
 }
