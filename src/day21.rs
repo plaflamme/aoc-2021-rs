@@ -114,7 +114,7 @@ impl QuantumUniverse {
                             }
                             None
                         } else {
-                            let mut game = game.clone();
+                            let mut game = *game;
                             game.0[player] = player_state;
                             Some((game, copies * times))
                         }
@@ -127,7 +127,7 @@ impl QuantumUniverse {
     }
 
     fn solve(&mut self) {
-        while self.games.len() > 0 {
+        while !self.games.is_empty() {
             self.step_and_collapse(0);
             self.step_and_collapse(1);
         }

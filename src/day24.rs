@@ -115,14 +115,14 @@ impl Alu {
         }
     }
 
-    fn exec(&mut self, instr: &Vec<Instr>, input: isize) {
+    fn exec(&mut self, instr: &[Instr], input: isize) {
         for &i in instr {
             match i {
                 Instr::Inp(r) => self[r] = input,
-                Instr::Mul(r, op) => self[r] = self[r] * self.fetch(&op),
-                Instr::Mod(r, op) => self[r] = self[r] % self.fetch(&op),
-                Instr::Add(r, op) => self[r] = self[r] + self.fetch(&op),
-                Instr::Div(r, op) => self[r] = self[r] / self.fetch(&op),
+                Instr::Mul(r, op) => self[r] *= self.fetch(&op),
+                Instr::Mod(r, op) => self[r] %= self.fetch(&op),
+                Instr::Add(r, op) => self[r] += self.fetch(&op),
+                Instr::Div(r, op) => self[r] /= self.fetch(&op),
                 Instr::Eql(r, op) => self[r] = (self[r] == self.fetch(&op)).into(),
             }
         }
@@ -153,10 +153,7 @@ impl Cipher {
             .batching(|it| match it.next() {
                 None => None,
                 Some(init @ Instr::Inp(input)) => {
-                    let rest = it.take_while_ref(|i| match i {
-                        Instr::Inp(_) => false,
-                        _ => true,
-                    });
+                    let rest = it.take_while_ref(|i| !matches!(i, Instr::Inp(_)));
                     Some(CipherStep(
                         input,
                         std::iter::once(init).chain(rest).collect(),
@@ -221,7 +218,7 @@ impl Cipher {
         }
         digits.push((min, max));
 
-        rest.into_iter().fold(
+        rest.iter().fold(
             (last_step.input(), valid_outputs),
             |(input_reg, valid), (step, inputs)| {
                 let mut valid_outputs = HashSet::new();
@@ -254,7 +251,7 @@ impl Solver for Day24 {
     type Input = Cipher;
 
     fn parse(input: &str) -> Self::Input {
-        Cipher::new(input.lines().map(|s| Instr::from_str(s)).collect())
+        Cipher::new(input.lines().map(Instr::from_str).collect())
     }
 
     fn part1(input: Self::Input) -> Self::Output {

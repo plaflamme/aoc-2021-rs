@@ -197,7 +197,7 @@ impl Add<&Vector> for Vector {
     type Output = Vector;
 
     fn add(self, add: &Vector) -> Self::Output {
-        &self + add
+        (&self).add(add)
     }
 }
 
@@ -205,7 +205,7 @@ impl Add<Vector> for &Vector {
     type Output = Vector;
 
     fn add(self, add: Vector) -> Self::Output {
-        self + &add
+        self.add(&add)
     }
 }
 
@@ -213,7 +213,7 @@ impl Sub<&Vector> for &Vector {
     type Output = Vector;
 
     fn sub(self, rhs: &Vector) -> Self::Output {
-        self + rhs.neg()
+        self.add(rhs.neg())
     }
 }
 
@@ -396,8 +396,7 @@ fn pairwise_transforms(scanners: Vec<Scanner>) -> HashMap<(usize, usize), Coordi
 fn solve_scanner_orientations(scanners: Vec<Scanner>) -> Vec<(Scanner, CoordinateTransform)> {
     let xforms = pairwise_transforms(scanners.clone());
     let base = scanners[0].clone();
-    let mut result = Vec::new();
-    result.push((base, CoordinateTransform::default()));
+    let mut result = vec![(base, CoordinateTransform::default())];
     for (idx, s) in scanners.into_iter().enumerate().skip(1) {
         let cs = xforms.get(&(0, idx)).unwrap();
         result.push((cs.apply(&s), cs.clone()));

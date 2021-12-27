@@ -102,7 +102,7 @@ impl Solver for Day13 {
             .into_iter()
             .filter(|l| !l.is_empty())
             .map(|l| {
-                let (along, value) = l.split_once("=").unwrap();
+                let (along, value) = l.split_once('=').unwrap();
                 match along.chars().last().unwrap() {
                     'x' => Fold::X(value.parse::<u32>().unwrap()),
                     'y' => Fold::Y(value.parse::<u32>().unwrap()),

@@ -251,7 +251,7 @@ where
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (x, y) = s
-            .split_once(",")
+            .split_once(',')
             .ok_or_else(|| anyhow::anyhow!("not a Pt: {}", s))?;
 
         Ok(Pt::new(x.trim().parse::<N>()?, y.trim().parse::<N>()?))

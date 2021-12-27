@@ -105,7 +105,7 @@ impl Solver for Day12 {
             .filter(|l| !l.is_empty())
             .map(|path| {
                 let (a, b) = path
-                    .split_once("-")
+                    .split_once('-')
                     .unwrap_or_else(|| panic!("unexpected line {}", path));
                 Edge(Cave::from_str(a), Cave::from_str(b))
             })

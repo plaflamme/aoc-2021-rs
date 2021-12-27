@@ -106,12 +106,12 @@ impl Range {
     }
 
     fn split(&self, rhs: &Range) -> (Option<Range>, Range, Option<Range>) {
-        assert!(self.intersects(&rhs) || rhs.is_empty());
+        assert!(self.intersects(rhs) || rhs.is_empty());
 
         if self.from >= rhs.from && self.to <= rhs.to {
             // lhs:  |-|
             // rhs: |---|
-            (None, self.clone(), None)
+            (None, *self, None)
         } else if self.from <= rhs.from {
             if self.to <= rhs.to {
                 // lhs: |---|
@@ -132,18 +132,16 @@ impl Range {
             } else {
                 unreachable!()
             }
+        } else if self.to >= rhs.to {
+            // lhs:   |---|
+            // rhs: |---|
+            (
+                None,
+                Range::new(self.from, rhs.to),
+                Some(Range::new(rhs.to, self.to)).filter(|r| !r.is_empty()),
+            )
         } else {
-            if self.to >= rhs.to {
-                // lhs:   |---|
-                // rhs: |---|
-                (
-                    None,
-                    Range::new(self.from, rhs.to),
-                    Some(Range::new(rhs.to, self.to)).filter(|r| !r.is_empty()),
-                )
-            } else {
-                unreachable!()
-            }
+            unreachable!()
         }
     }
 }
@@ -268,8 +266,8 @@ impl RangeTree {
             *self = RangeTree {
                 range,
                 value,
-                left: left.map(|t| Box::new(t)),
-                right: right.map(|t| Box::new(t)),
+                left: left.map(Box::new),
+                right: right.map(Box::new),
             };
         } else if self.range.from < rhs.range.from {
             match self.right.as_mut() {
@@ -323,7 +321,7 @@ impl Solver for Day22 {
         input
             .lines()
             .map(|l| {
-                let (on_off, ranges) = l.split_once(" ").unwrap();
+                let (on_off, ranges) = l.split_once(' ').unwrap();
                 let turn_on = match on_off {
                     "on" => true,
                     "off" => false,
@@ -331,7 +329,7 @@ impl Solver for Day22 {
                 };
 
                 fn parse_range(s: &str) -> RangeInclusive<i32> {
-                    let (_, s) = s.split_once("=").unwrap();
+                    let (_, s) = s.split_once('=').unwrap();
                     let (from, to) = s.split_once("..").unwrap();
                     let from = from.parse::<i32>().unwrap();
                     let to = to.parse::<i32>().unwrap();

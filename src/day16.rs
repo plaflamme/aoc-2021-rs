@@ -201,10 +201,10 @@ mod bitbit {
             loop {
                 packets.push(parse_packet(reader));
                 let remain = reader.bits_remaining().unwrap();
-                if init - remain == length {
-                    break;
-                } else if init - remain > length {
-                    panic!("oops")
+                match init - remain {
+                    l if l == length => break,
+                    l if l > length => panic!("expected {} to be < {}", l, length),
+                    _ => (),
                 }
             }
             Token::Op(op, packets)

@@ -58,10 +58,10 @@ impl Solver for Day17 {
     type Input = Area;
 
     fn parse(input: &str) -> Self::Input {
-        let (_, input) = input.split_once(":").unwrap();
+        let (_, input) = input.split_once(':').unwrap();
         let (x, y) = input.trim().split_once(", ").unwrap();
-        let (_, x) = x.split_once("=").unwrap();
-        let (_, y) = y.split_once("=").unwrap();
+        let (_, x) = x.split_once('=').unwrap();
+        let (_, y) = y.split_once('=').unwrap();
         let (xmin, xmax) = x.split_once("..").unwrap();
         let (ymin, ymax) = y.split_once("..").unwrap();
 

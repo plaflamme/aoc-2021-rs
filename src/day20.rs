@@ -82,7 +82,7 @@ impl Index<&[Pixel]> for Algorithm {
     fn index(&self, index: &[Pixel]) -> &Self::Output {
         assert!(index.len() == 9);
         let mut alg_idx = 0_usize;
-        index.into_iter().enumerate().for_each(|(idx, pixel)| {
+        index.iter().enumerate().for_each(|(idx, pixel)| {
             if *pixel == Pixel::Light {
                 alg_idx |= 1 << (8 - idx);
             }
@@ -100,7 +100,7 @@ fn enhance(alg: &Algorithm, i: Image, base: Pixel) -> Image {
 impl Display for Image {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in self.rows_iter() {
-            for s in row.into_iter() {
+            for s in row {
                 let c = match s {
                     Pixel::Light => '#',
                     Pixel::Dark => '.',

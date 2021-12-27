@@ -114,7 +114,7 @@ impl<const D: usize> Cave<D> {
         let first = room_pts.next().unwrap();
         if let Slot::Empty = self[first] {
             room_pts.fold(Some(first), |top, b| {
-                if let Some(_) = top {
+                if top.is_some() {
                     let other = self[b];
                     match other {
                         Slot::Empty => Some(b),
@@ -131,7 +131,7 @@ impl<const D: usize> Cave<D> {
     }
 
     // an iterator over the valid pts an amphipod can move to
-    fn available_landing_pts<'a>(&'a self, from: Pt, a: Amphipod) -> impl Iterator<Item = Pt> + 'a {
+    fn available_landing_pts(&self, from: Pt, a: Amphipod) -> impl Iterator<Item = Pt> + '_ {
         Cave::<D>::HALLWAY
             .into_iter()
             .filter(move |_| from.y != 0) // an amphipod will stay in the same spot in the hallway once it's there
@@ -171,7 +171,7 @@ impl<const D: usize> Cave<D> {
 
     // computes the distance between 2 points, if all slots in between are empty
     fn distance(&self, from: &Pt, to: &Pt) -> Option<usize> {
-        let mut current = from.clone();
+        let mut current = *from;
         let dx = (to.x as i8 - from.x as i8).signum();
         let mut distance = 0;
         while current != *to && (current == *from || self[current] == Slot::Empty) {
@@ -311,7 +311,7 @@ impl Solver for Day23 {
                 l[3..=10]
                     .split_terminator('#')
                     .take(4)
-                    .map(|s| Amphipod::from_char(s.chars().nth(0).unwrap()))
+                    .map(|s| Amphipod::from_char(s.chars().next().unwrap()))
                     .enumerate()
                     .for_each(|(idx, a)| rooms[idx][row] = Slot::Occupied(a))
             });
