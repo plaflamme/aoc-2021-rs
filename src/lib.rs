@@ -1,6 +1,7 @@
 #![feature(drain_filter)]
 #![feature(const_fn_trait_bound)]
 #![feature(box_patterns)]
+#![feature(int_roundings)] // for div_floor
 
 use aocf::{Aoc, Level};
 

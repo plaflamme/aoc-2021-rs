@@ -2,7 +2,6 @@ use std::fmt::Display;
 
 use crate::{Day18, Solver};
 use itertools::Itertools;
-use num::Integer;
 use text_trees::StringTreeNode;
 
 sample!(
@@ -50,7 +49,7 @@ impl Node {
     fn split(&mut self) -> bool {
         match self {
             Node::Leaf(v) if *v >= 10 => {
-                *self = Node::branch(Node::Leaf(v.div_floor(&2)), Node::Leaf(v.div_ceil(&2)));
+                *self = Node::branch(Node::Leaf(v.div_floor(2)), Node::Leaf(v.div_ceil(2)));
                 true
             }
             Node::Branch(box left, box right) => left.split() || right.split(),
