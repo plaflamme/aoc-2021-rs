@@ -132,6 +132,17 @@ impl<N: Integer + Copy> Pt<N> {
             }
         }
     }
+    pub fn to_wrapping(self, d: Dir, w: N, h: N) -> Self {
+        match self.to_checked(d, w, h) {
+            Some(to) => to,
+            None => match d {
+                Dir::Up => Self::new(self.x, h - N::one()),
+                Dir::Down => Self::new(self.x, N::zero()),
+                Dir::Left => Self::new(w - N::one(), self.y),
+                Dir::Right => Self::new(N::zero(), self.y),
+            },
+        }
+    }
     // Tries to travel the specified directions. Returns `Right` if it travelled all the way, `Left` otherwise.
     pub fn travel_checked(
         &self,
