@@ -169,78 +169,57 @@ impl Cipher {
     }
 
     fn compute_inputs(&self) -> Vec<HashSet<Alu>> {
-        let mut inputs = vec![HashSet::new()];
-        inputs[0].insert(Alu::default());
         // compute the output of each step, except for the last one
-        for (idx, c) in self.ciphers.iter().dropping_back(1).enumerate() {
-            let mut step_outputs = HashSet::new();
-            let next_step_input_register = self.ciphers[idx + 1].input();
-            for state in &inputs[idx] {
-                for input in 1..=9 {
-                    let mut output = state.clone();
-                    c.compute(input, &mut output);
-                    // the next step will clear this register, so its value doesn't matter here.
-                    output[next_step_input_register] = 0;
-                    step_outputs.insert(output);
-                }
-            }
-            inputs.push(step_outputs);
-        }
-        inputs
+        self.ciphers.iter().tuple_windows().fold(
+            vec![HashSet::from([Alu::default()])],
+            |mut inputs, (cipher, next_cipher)| {
+                let step_inputs = inputs.last().unwrap();
+                let step_outputs = step_inputs
+                    .iter()
+                    .flat_map(|s| (1..=9).map(move |i| (s, i)))
+                    .map(|(state, input)| {
+                        let mut output = state.clone();
+                        cipher.compute(input, &mut output);
+                        // the next step will clear this register, so its value doesn't matter here.
+                        output[next_cipher.input()] = 0;
+                        output
+                    })
+                    .collect();
+                inputs.push(step_outputs);
+                inputs
+            },
+        )
     }
 
     fn min_max_digits(&self) -> Vec<(u8, u8)> {
-        let inputs = self.compute_inputs();
-
-        let input_ciphers = self
-            .ciphers
-            .iter()
-            .zip(inputs.into_iter())
-            .rev()
-            .collect_vec();
-
-        let mut digits = Vec::new();
-        let mut max = 0_u8;
-        let mut min = 9_u8;
-
-        let ((last_step, inputs), rest) = input_ciphers.split_first().unwrap();
-        let mut valid_outputs = HashSet::new();
-        for input in inputs {
-            for i in 1..=9 {
-                let mut state = input.clone();
-                last_step.compute(i, &mut state);
-                if state.z == 0 {
-                    max = max.max(i as u8);
-                    min = min.min(i as u8);
-                    valid_outputs.insert(input);
-                }
-            }
-        }
-        digits.push((min, max));
-
-        rest.iter().fold(
-            (last_step.input(), valid_outputs),
-            |(input_reg, valid), (step, inputs)| {
-                let mut valid_outputs = HashSet::new();
-                let mut max = 0;
-                let mut min = 9;
-                for input in inputs {
-                    for i in 1..=9 {
-                        let mut state = input.clone();
-                        step.compute(i, &mut state);
-                        state[input_reg] = 0;
-                        if valid.contains(&state) {
-                            max = max.max(i as u8);
-                            min = min.min(i as u8);
-                            valid_outputs.insert(input);
+        let mut digits = vec![];
+        self.ciphers.iter().zip(self.compute_inputs()).rev().fold(
+            None,
+            |valid: Option<(Reg, HashSet<Alu>)>, (cipher, possible_inputs)| {
+                let (valid_outputs, valid_digits): (HashSet<_>, HashSet<_>) = possible_inputs
+                    .iter()
+                    .flat_map(|s| (1_u8..=9).map(move |i| (s, i)))
+                    .filter(|(s, input)| {
+                        let mut state = (*s).clone();
+                        cipher.compute(*input as isize, &mut state);
+                        match &valid {
+                            None => state.z == 0,
+                            Some((input_reg, valid_outputs)) => {
+                                state[*input_reg] = 0;
+                                valid_outputs.contains(&state)
+                            }
                         }
-                    }
-                }
+                    })
+                    .map(|(s, i)| (s.clone(), i))
+                    .unzip();
+
+                let (min, max) = valid_digits.into_iter().minmax().into_option().unwrap();
+
                 digits.push((min, max));
-                (step.input(), valid_outputs)
+
+                Some((cipher.input(), valid_outputs))
             },
         );
-
         digits
     }
 }
