@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     ops::{Index, IndexMut},
 };
 
@@ -191,7 +191,9 @@ impl Cipher {
         )
     }
 
-    fn min_max_digits(&self) -> Vec<(u8, u8)> {
+    // this solution computes the possible inputs for each step, then backtracks from the last step
+    // passing the valid ones back to the previous step, remembering which digit produced the valid ones
+    fn solve_backtracking(&self) -> (usize, usize) {
         let mut digits = vec![];
         self.ciphers.iter().zip(self.compute_inputs()).rev().fold(
             None,
@@ -221,6 +223,54 @@ impl Cipher {
             },
         );
         digits
+            .into_iter()
+            .rev()
+            .fold((0, 0), |(min, max), (rmin, rmax)| {
+                (min * 10 + rmin as usize, max * 10 + rmax as usize)
+            })
+    }
+
+    // kind of a brute force approach, but collapses common states so that we limit the exponential growth between steps.
+    fn solve_direct(&self) -> (usize, usize) {
+        let init = HashMap::from([(Alu::default(), (usize::MAX, 0))]);
+        let state_index: HashMap<Alu, (usize, usize)> =
+            self.ciphers
+                .iter()
+                .enumerate()
+                .fold(init, |state_index, (idx, cipher)| {
+                    let mut outputs = HashMap::with_capacity(state_index.len());
+                    state_index
+                        .iter()
+                        .flat_map(|s| (1..=9).map(move |i| (s, i)))
+                        .map(|((state, (current_min, current_max)), input)| {
+                            let mut output = state.clone();
+                            cipher.compute(input, &mut output);
+                            if let Some(next_cipher) = self.ciphers.get(idx + 1) {
+                                // the next step will clear this register, so its value doesn't matter here.
+                                output[next_cipher.input()] = 0;
+                            }
+
+                            let new_min = current_min * 10 + input as usize;
+                            let new_max = current_max * 10 + input as usize;
+                            (output, (new_min, new_max))
+                        })
+                        .for_each(|(key, (rmin, rmax))| {
+                            outputs
+                                .entry(key)
+                                .and_modify(|(min, max)| {
+                                    *min = usize::min(*min, rmin);
+                                    *max = usize::max(*max, rmax);
+                                })
+                                .or_insert((rmin, rmax));
+                        });
+                    outputs
+                });
+
+        state_index
+            .into_iter()
+            .filter_map(|(state, minmax)| if state.z == 0 { Some(minmax) } else { None })
+            .fold1(|(lmin, lmax), (rmin, rmax)| (lmin.min(rmin), lmax.max(rmax)))
+            .unwrap()
     }
 }
 
@@ -234,22 +284,30 @@ impl Solver for Day24 {
     }
 
     fn part1(input: Self::Input) -> Self::Output {
-        input
-            .min_max_digits()
-            .into_iter()
-            .map(|(_, max)| max)
-            .enumerate()
-            .map(|(idx, d)| 10_usize.pow(idx as u32) * d as usize)
-            .sum::<usize>()
+        input.solve_backtracking().1
     }
 
     fn part2(input: Self::Input) -> Self::Output {
-        input
-            .min_max_digits()
-            .into_iter()
-            .map(|(min, _)| min)
-            .enumerate()
-            .map(|(idx, d)| 10_usize.pow(idx as u32) * d as usize)
-            .sum::<usize>()
+        input.solve_backtracking().0
+    }
+}
+
+#[derive(Debug)]
+pub struct Direct;
+impl Solver<Direct> for Day24 {
+    type Output = usize;
+
+    type Input = Cipher;
+
+    fn parse(input: &str) -> Self::Input {
+        Cipher::new(input.lines().map(Instr::from_str).collect())
+    }
+
+    fn part1(input: Self::Input) -> Self::Output {
+        input.solve_direct().1
+    }
+
+    fn part2(input: Self::Input) -> Self::Output {
+        input.solve_direct().0
     }
 }

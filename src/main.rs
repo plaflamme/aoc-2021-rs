@@ -118,7 +118,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             21 => run!(Day21),
             22 => run!(Day22),
             23 => run!(Day23),
-            24 => run!(Day24),
+            24 => run!(Day24, Main, day24::Direct),
             25 => run!(Day25),
             _ => panic!("invalid day {}, must be (1,25)", day),
         };
