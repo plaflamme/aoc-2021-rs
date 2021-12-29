@@ -1,4 +1,4 @@
-use aoc2021::*;
+use aoc_2021::*;
 use aocf::Aoc;
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 

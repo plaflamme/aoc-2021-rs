@@ -4,7 +4,7 @@ use std::error::Error;
 use std::num::ParseIntError;
 use termion::{color, style};
 
-use aoc2021::*;
+use aoc_2021::*;
 
 #[derive(clap::ArgEnum, Clone, Copy)]
 enum Mode {
