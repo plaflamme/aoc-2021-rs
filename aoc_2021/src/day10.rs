@@ -1,6 +1,7 @@
 use itertools::{Either, Itertools};
 
-use crate::{Day10, Solver};
+use aoc_lib::*;
+day!(Day10, 10);
 
 sample!(
     Day10,

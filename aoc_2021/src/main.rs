@@ -5,6 +5,7 @@ use std::num::ParseIntError;
 use termion::{color, style};
 
 use aoc_2021::*;
+use aoc_lib::*;
 
 #[derive(clap::ArgEnum, Clone, Copy)]
 enum Mode {
@@ -95,31 +96,31 @@ fn main() -> Result<(), Box<dyn Error>> {
     for day in opts.days {
         println!("Day {}", day);
         match day {
-            1 => run!(Day1),
-            2 => run!(Day2),
-            3 => run!(Day3),
-            4 => run!(Day4),
-            5 => run!(Day5),
-            6 => run!(Day6),
-            7 => run!(Day7),
-            8 => run!(Day8),
-            9 => run!(Day9),
-            10 => run!(Day10),
-            11 => run!(Day11),
-            12 => run!(Day12),
-            13 => run!(Day13),
-            14 => run!(Day14),
-            15 => run!(Day15, Main, day15::AStar, day15::Dijkstra),
-            16 => run!(Day16, Main, day16::Bitter),
-            17 => run!(Day17),
-            18 => run!(Day18),
-            19 => run!(Day19),
-            20 => run!(Day20),
-            21 => run!(Day21),
-            22 => run!(Day22),
-            23 => run!(Day23),
-            24 => run!(Day24, Main, day24::Direct),
-            25 => run!(Day25),
+            1 => run!(day1::Day1),
+            2 => run!(day2::Day2),
+            3 => run!(day3::Day3),
+            4 => run!(day4::Day4),
+            5 => run!(day5::Day5),
+            6 => run!(day6::Day6),
+            7 => run!(day7::Day7),
+            8 => run!(day8::Day8),
+            9 => run!(day9::Day9),
+            10 => run!(day10::Day10),
+            11 => run!(day11::Day11),
+            12 => run!(day12::Day12),
+            13 => run!(day13::Day13),
+            14 => run!(day14::Day14),
+            15 => run!(day15::Day15, Main, day15::AStar, day15::Dijkstra),
+            16 => run!(day16::Day16, Main, day16::Bitter),
+            17 => run!(day17::Day17),
+            18 => run!(day18::Day18),
+            19 => run!(day19::Day19),
+            20 => run!(day20::Day20),
+            21 => run!(day21::Day21),
+            22 => run!(day22::Day22),
+            23 => run!(day23::Day23),
+            24 => run!(day24::Day24, Main, day24::Direct),
+            25 => run!(day25::Day25),
             _ => panic!("invalid day {}, must be (1,25)", day),
         };
     }

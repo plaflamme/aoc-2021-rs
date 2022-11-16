@@ -3,7 +3,8 @@ use std::convert::identity;
 use itertools::Itertools;
 use log::debug;
 
-use crate::Day6;
+use aoc_lib::*;
+day!(Day6, 6);
 
 #[derive(Clone)]
 pub struct Colony([usize; 9], usize);
@@ -34,7 +35,7 @@ impl Colony {
 
 sample!(Day6, "3,4,3,1,2", "5934", "26984457539");
 
-impl super::Solver for Day6 {
+impl Solver for Day6 {
     type Output = usize;
     type Input = Colony;
 

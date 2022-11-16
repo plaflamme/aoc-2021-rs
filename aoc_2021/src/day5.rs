@@ -1,6 +1,7 @@
 use itertools::Itertools;
 
-use crate::Day5;
+use aoc_lib::*;
+day!(Day5, 5);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Pt {
@@ -76,7 +77,7 @@ where
 }
 
 sample!(
-    crate::Day5,
+    Day5,
     "0,9 -> 5,9
 8,0 -> 0,8
 9,4 -> 3,4
@@ -92,7 +93,7 @@ sample!(
     "12"
 );
 
-impl super::Solver for Day5 {
+impl Solver for Day5 {
     type Output = usize;
     type Input = Vec<Line>;
 

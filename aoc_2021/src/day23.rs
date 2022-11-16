@@ -2,7 +2,8 @@ use std::ops::{Index, IndexMut};
 
 use itertools::Itertools;
 
-use crate::{Day23, Solver};
+use aoc_lib::*;
+day!(Day23, 23);
 
 type Pt = crate::grid::Pt<u8>;
 
@@ -329,7 +330,7 @@ impl Solver for Day23 {
 
 #[cfg(test)]
 mod test {
-    use crate::Sample;
+    use aoc_lib::Sample;
 
     use super::*;
 

@@ -1,4 +1,6 @@
-use crate::{Day8, Solver};
+use aoc_lib::*;
+day!(Day8, 8);
+
 use bitflags::bitflags;
 use itertools::Itertools;
 
@@ -232,10 +234,7 @@ mod test {
     #[test]
     fn test_decoder_program() {
         let s = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab";
-        let signals = s
-            .split_ascii_whitespace()
-            .map(Signal::from_str)
-            .collect();
+        let signals = s.split_ascii_whitespace().map(Signal::from_str).collect();
 
         let decoder = Decoder::new(Panel(signals));
         assert_eq!(decoder.decode(Signal::from_str("cdfeb")), 5);

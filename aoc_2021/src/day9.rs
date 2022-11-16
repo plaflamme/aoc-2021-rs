@@ -2,7 +2,8 @@ use std::{collections::HashSet, iter::once};
 
 use itertools::Itertools;
 
-use crate::{Day9, Solver};
+use aoc_lib::*;
+day!(Day9, 9);
 
 sample!(
     Day9,

@@ -5,7 +5,8 @@ use std::{
 
 use itertools::Itertools;
 
-use crate::{Day19, Solver};
+use aoc_lib::*;
+day!(Day19, 19);
 
 sample!(
     Day19,
@@ -458,7 +459,7 @@ impl Solver for Day19 {
 
 #[cfg(test)]
 mod test {
-    use crate::Sample;
+    use aoc_lib::Sample;
 
     use super::*;
 

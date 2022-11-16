@@ -2,7 +2,8 @@ use std::{collections::HashMap, convert::identity};
 
 use itertools::Itertools;
 
-use crate::{Day14, Solver};
+use aoc_lib::*;
+day!(Day14, 14);
 
 sample!(
     Day14,
@@ -145,7 +146,7 @@ impl Solver for Day14 {
 
 #[cfg(test)]
 mod test {
-    use crate::Sample;
+    use aoc_lib::Sample;
 
     use super::*;
 

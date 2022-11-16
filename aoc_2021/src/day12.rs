@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::{Day12, Solver};
+use aoc_lib::*;
+day!(Day12, 12);
 
 sample!(
     Day12,

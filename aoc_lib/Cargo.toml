@@ -4,3 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+aocf = { version = "0.1.18", features = [
+    "html_parsing", # required feature to submit
+] }
+anyhow = "1.0.51"
+itertools = "0.10.3"
+num = "0.4"

@@ -1,6 +1,10 @@
 use itertools::Itertools;
 
-use crate::{tools::empty_line_delimited_batches, Day4};
+use aoc_lib::*;
+
+day!(Day4, 4);
+
+use crate::tools::empty_line_delimited_batches;
 
 #[derive(Clone, Debug)]
 struct Board {
@@ -107,7 +111,7 @@ impl Solution {
 }
 
 sample!(
-    crate::Day4,
+    Day4,
     "7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
 
 22 13 17 11  0
@@ -132,7 +136,7 @@ sample!(
     "1924"
 );
 
-impl super::Solver for Day4 {
+impl Solver for Day4 {
     type Output = u32;
     type Input = Solution;
 

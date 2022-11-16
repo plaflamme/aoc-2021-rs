@@ -1,6 +1,8 @@
 use std::{error::Error, str::FromStr};
 
-use crate::Day2;
+use aoc_lib::*;
+
+day!(Day2, 2);
 
 pub enum Command {
     Down(u32),
@@ -70,7 +72,7 @@ impl AimedPosition {
 }
 
 sample!(
-    crate::Day2,
+    Day2,
     "forward 5
 down 5
 forward 8
@@ -83,7 +85,7 @@ forward 2
     "900"
 );
 
-impl super::Solver for Day2 {
+impl Solver for Day2 {
     type Output = i32;
     type Input = Vec<Command>;
 

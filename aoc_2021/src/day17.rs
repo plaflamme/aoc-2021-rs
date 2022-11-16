@@ -1,7 +1,8 @@
 use itertools::Itertools;
 
 use crate::grid::Pt;
-use crate::{Day17, Solver};
+use aoc_lib::*;
+day!(Day17, 17);
 
 sample!(Day17, "target area: x=20..30, y=-10..-5", "45", "112");
 
@@ -104,7 +105,7 @@ impl Solver for Day17 {
 
 #[cfg(test)]
 mod test {
-    use crate::Sample;
+    use aoc_lib::Sample;
 
     use super::*;
     #[test]

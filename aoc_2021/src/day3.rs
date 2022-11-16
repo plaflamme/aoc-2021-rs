@@ -1,4 +1,6 @@
-use crate::Day3;
+use aoc_lib::*;
+
+day!(Day3, 3);
 
 #[derive(Clone)]
 pub struct Solution(Vec<u32>, usize);
@@ -50,7 +52,7 @@ impl Solution {
 }
 
 sample!(
-    crate::Day3,
+    Day3,
     "
 00100
 11110
@@ -69,7 +71,7 @@ sample!(
     "230"
 );
 
-impl super::Solver for Day3 {
+impl Solver for Day3 {
     type Output = u32;
     type Input = Solution;
 

@@ -3,8 +3,9 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use crate::{Day24, Solver};
+use aoc_lib::*;
 use itertools::Itertools;
+day!(Day24, 24);
 
 sample!(Day24, "", "");
 

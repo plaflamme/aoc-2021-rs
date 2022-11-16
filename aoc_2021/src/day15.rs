@@ -2,7 +2,8 @@ use itertools::Itertools;
 use num::integer::div_rem;
 use std::{cmp::Reverse, collections::BinaryHeap};
 
-use crate::{Day15, Solver};
+use aoc_lib::*;
+day!(Day15, 15);
 
 sample!(
     Day15,

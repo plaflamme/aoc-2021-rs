@@ -1,8 +1,12 @@
 use itertools::Itertools;
 use std::str::FromStr;
 
+use aoc_lib::*;
+
+day!(Day1, 1);
+
 sample!(
-    crate::Day1,
+    Day1,
     "199
 200
 208
@@ -25,7 +29,7 @@ fn increases(depths: impl Iterator<Item = u32>) -> usize {
         .count()
 }
 
-impl super::Solver for super::Day1 {
+impl Solver for Day1 {
     type Output = usize;
     type Input = Vec<u32>;
 

@@ -1,6 +1,7 @@
 use itertools::Itertools;
 
-use crate::Day7;
+use aoc_lib::*;
+day!(Day7, 7);
 
 fn fuel_cost(max: u32) -> Vec<u32> {
     (0..=max)
@@ -36,7 +37,7 @@ fn solve(crabs: Vec<u32>, fuel_cost: impl Fn(u32) -> u32) -> u32 {
 
 sample!(Day7, "16,1,2,0,4,2,7,1,2,14", "37", "168");
 
-impl super::Solver for Day7 {
+impl Solver for Day7 {
     type Output = u32;
     type Input = Vec<u32>;
 

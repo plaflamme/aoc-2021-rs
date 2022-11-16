@@ -2,7 +2,8 @@ use std::{fmt::Debug, ops::RangeInclusive};
 
 use itertools::Itertools;
 
-use crate::{Day22, Solver};
+use aoc_lib::*;
+day!(Day22, 22);
 
 sample!(
     Day22,

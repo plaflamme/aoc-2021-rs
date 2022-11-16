@@ -1,8 +1,9 @@
 use std::fmt::Display;
 
-use crate::{Day18, Solver};
+use aoc_lib::*;
 use itertools::Itertools;
 use text_trees::StringTreeNode;
+day!(Day18, 18);
 
 sample!(
     Day18,
@@ -203,7 +204,7 @@ impl Solver for Day18 {
 
 #[cfg(test)]
 mod test {
-    use crate::Sample;
+    use aoc_lib::Sample;
 
     use super::*;
 

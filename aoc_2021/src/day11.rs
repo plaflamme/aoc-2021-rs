@@ -2,7 +2,8 @@ use std::collections::HashSet;
 
 use itertools::Itertools;
 
-use crate::{Day11, Solver};
+use aoc_lib::*;
+day!(Day11, 11);
 
 sample!(
     Day11,
@@ -92,7 +93,7 @@ impl Solver for Day11 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Sample;
+    use aoc_lib::Sample;
     #[test]
     fn test_steps() {
         let expected = vec![

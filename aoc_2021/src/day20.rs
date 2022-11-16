@@ -2,7 +2,8 @@ use std::{fmt::Display, ops::Index};
 
 use itertools::Itertools;
 
-use crate::{grid::Grid, Day20, Solver};
+use aoc_lib::*;
+day!(Day20, 20);
 
 sample!(
     Day20,
@@ -39,7 +40,7 @@ impl Pixel {
     }
 }
 
-type Image = Grid<Pixel>;
+type Image = crate::grid::Grid<Pixel>;
 type Pt = crate::grid::Pt<i32>;
 
 impl Image {
@@ -165,7 +166,7 @@ impl Solver for Day20 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Sample;
+    use aoc_lib::Sample;
 
     #[test]
     fn test_index_algorithm() {

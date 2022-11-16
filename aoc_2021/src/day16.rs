@@ -1,6 +1,8 @@
-use crate::{Day16, Solver};
+use aoc_lib::*;
 use bitvec::prelude::*;
 use itertools::Itertools;
+
+day!(Day16, 16);
 
 type Bits = BitVec<Msb0, u8>;
 type Slice = BitSlice<Msb0, u8>;

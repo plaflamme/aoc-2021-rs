@@ -46,6 +46,7 @@ name = "aoc_2021"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "aoc_lib",
  "aocf",
  "bitflags",
  "bitter",
@@ -64,6 +65,12 @@ dependencies = [
 [[package]]
 name = "aoc_lib"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aocf",
+ "itertools",
+ "num",
+]
 
 [[package]]
 name = "aocf"
@@ -581,9 +588,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.10.1"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69ddb889f9d0d08a67338271fa9b62996bc788c7796a5c18cf057420aaed5eaf"
+checksum = "a9a9d19fa1e79b6215ff29b9d6880b706147f16e9b1dbb1e4e5947b5b02bc5e3"
 dependencies = [
  "either",
 ]

@@ -1,6 +1,8 @@
 use itertools::Itertools;
 
-use crate::{grid::Dir, Day25, Solver};
+use crate::grid::Dir;
+use aoc_lib::*;
+day!(Day25, 25);
 
 sample!(
     Day25,
