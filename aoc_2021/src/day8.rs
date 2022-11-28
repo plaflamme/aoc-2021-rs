@@ -227,8 +227,113 @@ impl Solver for Day8 {
     }
 }
 
+/// given a permutation of the wires, applies the signal and returns the corresponding digit,
+/// or None if it's not any expected combination.
+fn apply_permutation(permutation: &[char], signal: &str) -> Option<usize> {
+    let signal: String = signal
+        .chars()
+        .map(|c| permutation[c as usize - 'a' as usize])
+        .sorted()
+        .collect();
+    match signal.as_str() {
+        "abcefg" => Some(0),
+        "cf" => Some(1),
+        "acdeg" => Some(2),
+        "acdfg" => Some(3),
+        "bcdf" => Some(4),
+        "abdfg" => Some(5),
+        "abdefg" => Some(6),
+        "acf" => Some(7),
+        "abcdefg" => Some(8),
+        "abcdfg" => Some(9),
+        _ => None,
+    }
+}
+
+/// finds a permutation of the wires that produces all 10 digits
+fn find_permutation(panel: Vec<String>) -> Vec<char> {
+    assert!(panel.len() == 10);
+    for permutation in ('a'..='g').permutations(7) {
+        let nums = panel
+            .iter()
+            .flat_map(|signal| apply_permutation(&permutation, signal))
+            .unique()
+            .count();
+        if nums == 10 {
+            return permutation;
+        }
+    }
+    unreachable!("could not find a permutation that results in 10 distinct digits")
+}
+
+pub struct Line {
+    signals: Vec<String>,
+    outputs: Vec<String>,
+}
+
+// Brute-force approach by trying all possible permutations of the wires until
+// we find the permutation that produces all 10 digits.
+#[derive(Debug)]
+pub struct Permutations;
+impl Solver<Permutations> for Day8 {
+    type Output = usize;
+    type Input = Vec<Line>;
+
+    fn parse(input: &str) -> Self::Input {
+        input
+            .lines()
+            .map(|l| {
+                let (s, out) = l.split_once(" | ").unwrap();
+
+                let signals = s
+                    .split_ascii_whitespace()
+                    .map(|s| s.to_owned())
+                    .collect_vec();
+
+                let outputs = out
+                    .split_ascii_whitespace()
+                    .map(|s| s.to_owned())
+                    .collect_vec();
+
+                Line { signals, outputs }
+            })
+            .collect()
+    }
+
+    fn part1(input: Self::Input) -> Self::Output {
+        let uniques = [2, 3, 4, 7];
+        input
+            .into_iter()
+            .map(|line| {
+                line.outputs
+                    .into_iter()
+                    .map(|s| s.len())
+                    .filter(|n| uniques.contains(n))
+                    .count()
+            })
+            .sum::<usize>()
+    }
+
+    fn part2(input: Self::Input) -> Self::Output {
+        input
+            .into_iter()
+            .map(|line| {
+                let permutation = find_permutation(line.signals);
+                line.outputs
+                    .into_iter()
+                    .map(move |output| apply_permutation(&permutation, &output).unwrap())
+                    .join("")
+                    .parse::<usize>()
+                    .unwrap()
+            })
+            .sum()
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use crate::day8::{apply_permutation, find_permutation};
+
     use super::{Decoder, Panel, Signal};
 
     #[test]
@@ -241,5 +346,18 @@ mod test {
         assert_eq!(decoder.decode(Signal::from_str("fcadb")), 3);
         assert_eq!(decoder.decode(Signal::from_str("cdfeb")), 5);
         assert_eq!(decoder.decode(Signal::from_str("cdbaf")), 3);
+    }
+
+    #[test]
+    fn test_permutation() {
+        let s = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab";
+        let signals = s.split_ascii_whitespace().map(|s| s.to_owned()).collect();
+
+        let perm = find_permutation(signals);
+
+        assert_eq!(apply_permutation(&perm, "cdfeb"), Some(5));
+        assert_eq!(apply_permutation(&perm, "fcadb"), Some(3));
+        assert_eq!(apply_permutation(&perm, "cdfeb"), Some(5));
+        assert_eq!(apply_permutation(&perm, "cdbaf"), Some(3));
     }
 }

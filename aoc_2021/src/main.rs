@@ -103,7 +103,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             5 => run!(day5::Day5),
             6 => run!(day6::Day6),
             7 => run!(day7::Day7),
-            8 => run!(day8::Day8),
+            8 => run!(day8::Day8, Main, day8::Permutations),
             9 => run!(day9::Day9),
             10 => run!(day10::Day10),
             11 => run!(day11::Day11),
